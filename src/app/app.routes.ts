@@ -4,12 +4,13 @@ import { CartPageComponent } from './app/features/cart/cart-page/cart-page.compo
 import { LoginPageComponent } from './app/features/auth/login-page/login-page.component';
 import { RegisterPageComponent } from './app/features/auth/register-page/register-page.component';
 import { SelectClientPageComponent } from './app/features/auth/select-client-page/select-client-page.component';
+import { HomePageComponent } from './app/features/home/home-page/home-page.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginPageComponent },
   { path: 'register', component: RegisterPageComponent },
   { path: 'select-client', component: SelectClientPageComponent },
-  { path: 'catalog', component: ProductListComponent },
+  { path: 'catalog', component: HomePageComponent },
   { path: 'cart', component: CartPageComponent }
 ];

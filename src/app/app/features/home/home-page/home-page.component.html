@@ -1,0 +1,123 @@
+<div class="home-container">
+  <!-- Header con filtros -->
+  <div class="catalog-header">
+    <div class="filters">
+      <button 
+        class="filter-btn" 
+        [class.active]="selectedFilter === 'tejido'"
+        (click)="setFilter('tejido')"
+      >
+        Tejido
+      </button>
+      <button 
+        class="filter-btn" 
+        [class.active]="selectedFilter === 'plano'"
+        (click)="setFilter('plano')"
+      >
+        Plano
+      </button>
+    </div>
+  </div>
+
+  <!-- Carrusel de productos -->
+  <div class="carousel-container">
+    <button 
+      class="carousel-btn prev" 
+      (click)="previousSlide()"
+      [disabled]="currentSlide === 0"
+    >
+      ‹
+    </button>
+    
+    <div class="carousel-wrapper">
+      <div 
+        class="carousel-track" 
+        [style.transform]="'translateX(' + (-currentSlide * 100) + '%)'"
+      >
+        <div 
+          *ngFor="let producto of filteredProducts; let i = index" 
+          class="carousel-item"
+          (click)="selectProduct(producto)"
+          [class.selected]="selectedProduct?.id === producto.id"
+        >
+          <div class="product-card">
+            <div class="product-image">
+              <div class="placeholder-image">
+                {{ producto.nombre.charAt(0) }}
+              </div>
+            </div>
+            <div class="product-info">
+              <h3>{{ producto.nombre }}</h3>
+              <p>{{ producto.descripcion }}</p>
+              <div class="price-range">
+                ${{ getMinPrice(producto) }} - ${{ getMaxPrice(producto) }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <button 
+      class="carousel-btn next" 
+      (click)="nextSlide()"
+      [disabled]="currentSlide >= maxSlide"
+    >
+      ›
+    </button>
+  </div>
+
+  <!-- Detalle del producto seleccionado -->
+  <div *ngIf="selectedProduct" class="product-detail">
+    <div class="detail-container">
+      <div class="product-image-large">
+        <div class="placeholder-image-large">
+          {{ selectedProduct.nombre.charAt(0) }}
+        </div>
+      </div>
+      
+      <div class="product-variants">
+        <h2>{{ selectedProduct.nombre }}</h2>
+        <p class="product-description">{{ selectedProduct.descripcion }}</p>
+        
+        <!-- Grilla de variantes -->
+        <div class="variants-grid">
+          <div class="grid-header">
+            <div class="sku-col">SKU</div>
+            <div class="size-col" *ngFor="let talle of getTalles()">{{ talle }}</div>
+          </div>
+          
+          <div *ngFor="let color of getColores()" class="variant-row">
+            <div class="color-cell">{{ color }}</div>
+            <div 
+              *ngFor="let talle of getTalles()" 
+              class="quantity-cell"
+            >
+              <input 
+                type="number" 
+                [value]="getQuantity(color, talle)"
+                (input)="updateQuantity(color, talle, $event)"
+                [max]="getStock(color, talle)"
+                min="0"
+                class="quantity-input"
+              />
+            </div>
+          </div>
+        </div>
+        
+        <div class="product-actions">
+          <div class="price-display">
+            Precio: ${{ getMinPrice(selectedProduct) }}
+          </div>
+          <button 
+            class="add-to-cart-btn"
+            (click)="addToCart()"
+            [disabled]="!hasSelectedItems()"
+          >
+            AGREGAR AL PEDIDO
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
