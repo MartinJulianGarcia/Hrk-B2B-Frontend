@@ -1,0 +1,8 @@
+.grid { width:100%; border-collapse: collapse;
+    th, td { border:1px solid #ddd; padding:8px; }
+    th { background:#f7f7f7 }
+    input { width:70px; padding:4px; }
+    .over { border:2px solid #c00; background:#ffecec; }
+    .color { font-weight:600; }
+    .sku { font-size:10px; color:#666; margin-top:4px; }
+  }
