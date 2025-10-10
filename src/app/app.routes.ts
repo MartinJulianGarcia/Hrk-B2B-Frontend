@@ -5,6 +5,8 @@ import { LoginPageComponent } from './app/features/auth/login-page/login-page.co
 import { RegisterPageComponent } from './app/features/auth/register-page/register-page.component';
 import { SelectClientPageComponent } from './app/features/auth/select-client-page/select-client-page.component';
 import { HomePageComponent } from './app/features/home/home-page/home-page.component';
+import { InfoPageComponent } from './app/features/info/info-page/info-page.component';
+import { ProfilePageComponent } from './app/features/profile/profile-page/profile-page.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -12,5 +14,7 @@ export const routes: Routes = [
   { path: 'register', component: RegisterPageComponent },
   { path: 'select-client', component: SelectClientPageComponent },
   { path: 'catalog', component: HomePageComponent },
-  { path: 'cart', component: CartPageComponent }
+  { path: 'cart', component: CartPageComponent },
+  { path: 'info', component: InfoPageComponent },
+  { path: 'profile', component: ProfilePageComponent }
 ];

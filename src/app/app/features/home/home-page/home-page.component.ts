@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ProductoDTO, ProductsService } from '../../../core/products.service';
 import { CartService } from '../../../core/cart.service';
 import { AuthService } from '../../../core/auth.service';
@@ -24,7 +25,8 @@ export class HomePageComponent implements OnInit {
   constructor(
     private productsService: ProductsService,
     private cartService: CartService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -142,5 +144,31 @@ export class HomePageComponent implements OnInit {
       // Limpiar selección
       this.selectedQuantities = {};
     });
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
+
+  goToCart(): void {
+    this.router.navigate(['/cart']);
+  }
+
+  goToCatalog(): void {
+    this.router.navigate(['/catalog']);
+  }
+
+  goToInfo(): void {
+    this.router.navigate(['/info']);
+  }
+
+  goToProfile(): void {
+    this.router.navigate(['/profile']);
+  }
+
+  goToHistory(): void {
+    // Por ahora redirige al catálogo, más adelante se puede crear una página de historial
+    this.router.navigate(['/catalog']);
   }
 }

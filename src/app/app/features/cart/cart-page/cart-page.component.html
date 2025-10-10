@@ -1,5 +1,41 @@
 <div class="cart-container">
-  <h2>Carrito de Compras</h2>
+  <!-- Header negro con logo y navegación -->
+  <div class="cart-header">
+    <div class="header-left">
+      <div class="logo" (click)="goToCatalog()">
+        <div class="logo-symbol">
+          <div class="hk-logo">HK</div>
+        </div>
+        <span>HRK</span>
+      </div>
+      <nav class="main-nav">
+        <a (click)="goToCatalog()" class="nav-item">SHOP</a>
+        <a (click)="goToCatalog()" class="nav-item sale">SALE</a>
+        <a (click)="goToInfo()" class="nav-item info">info</a>
+      </nav>
+    </div>
+    
+    <div class="header-right">
+      <button class="icon-btn cart-icon active" title="Carrito">
+        🛒
+      </button>
+      <button class="icon-btn search-icon" title="Buscar">
+        🔍
+      </button>
+      <button class="icon-btn history-btn" title="Historial de Pedidos" (click)="goToHistory()">
+        📋
+      </button>
+      <button class="icon-btn user-icon" title="Perfil de Usuario" (click)="goToProfile()">
+        <img src="/images/user-icon.png" alt="Usuario" class="user-icon-img">
+      </button>
+      <button class="logout-btn" (click)="logout()" title="Cerrar Sesión">
+        Cerrar Sesión
+      </button>
+    </div>
+  </div>
+
+  <div class="cart-content">
+    <h2>Carrito de Compras</h2>
   
   <!-- Items del carrito -->
   <div *ngIf="carritoItems.length > 0; else emptyCart" class="cart-items">
@@ -67,6 +103,7 @@
             class="btn-confirm">
       Confirmar pedido
     </button>
+  </div>
   </div>
 </div>
 

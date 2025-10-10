@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { NgIf, NgFor, CurrencyPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { CartService, PedidoDTO, CarritoItemDTO } from '../../../core/cart.service';
 import { OrdersService } from '../../../core/orders.service';
+import { AuthService } from '../../../core/auth.service';
 
 @Component({
   selector: 'app-cart-page',
@@ -18,7 +19,12 @@ export class CartPageComponent implements OnInit {
   totalCarrito = 0;
   cantidadItems = 0;
 
-  constructor(private cart: CartService, private orders: OrdersService) {}
+  constructor(
+    private cart: CartService, 
+    private orders: OrdersService,
+    private authService: AuthService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -42,5 +48,27 @@ export class CartPageComponent implements OnInit {
   confirmar() {
     if (!this.pedido) return;
     this.orders.confirmar(this.pedido.id).subscribe(p => this.pedido = p);
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
+
+  goToCatalog(): void {
+    this.router.navigate(['/catalog']);
+  }
+
+  goToInfo(): void {
+    this.router.navigate(['/info']);
+  }
+
+  goToProfile(): void {
+    this.router.navigate(['/profile']);
+  }
+
+  goToHistory(): void {
+    // Por ahora redirige al catálogo, más adelante se puede crear una página de historial
+    this.router.navigate(['/catalog']);
   }
 }

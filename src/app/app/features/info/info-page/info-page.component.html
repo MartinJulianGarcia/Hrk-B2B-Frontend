@@ -1,0 +1,60 @@
+<div class="info-container">
+  <!-- Header negro con logo y navegación -->
+  <div class="info-header">
+    <div class="header-left">
+      <div class="logo" (click)="goToCatalog()">
+        <div class="logo-symbol">
+          <div class="hk-logo">HK</div>
+        </div>
+        <span>HRK</span>
+      </div>
+      <nav class="main-nav">
+        <a (click)="goToCatalog()" class="nav-item">SHOP</a>
+        <a (click)="goToCatalog()" class="nav-item sale">SALE</a>
+        <a (click)="goToInfo()" class="nav-item info active">info</a>
+      </nav>
+    </div>
+    
+    <div class="header-right">
+      <button class="icon-btn cart-icon" title="Carrito" (click)="goToCart()">
+        🛒
+      </button>
+      <button class="icon-btn search-icon" title="Buscar">
+        🔍
+      </button>
+      <button class="icon-btn history-btn" title="Historial de Pedidos" (click)="goToHistory()">
+        📋
+      </button>
+      <button class="icon-btn user-icon" title="Perfil de Usuario" (click)="goToProfile()">
+        <img src="/images/user-icon.png" alt="Usuario" class="user-icon-img">
+      </button>
+      <button class="logout-btn" (click)="logout()" title="Cerrar Sesión">
+        Cerrar Sesión
+      </button>
+    </div>
+  </div>
+
+  <div class="info-content">
+    <h1>Preguntas Frecuentes</h1>
+    
+    <div class="faq-container">
+      <div class="faq-item">
+        <h2>¿Cómo comprar?</h2>
+        <p>Para realizar un pedido, debe agregarse los elementos del catálogo en talle y color seleccionados. Una vez agregados deberá dirigirse al carrito para verificar y confirmar el pedido.</p>
+        <p>Una copia de su orden de compra será enviada por mail y la misma será compromiso de compra.</p>
+      </div>
+
+      <div class="faq-item">
+        <h2>¿Necesitas ayuda?</h2>
+        <p>Comunícate al <strong>11-3255-0195</strong></p>
+        
+        <div class="whatsapp-container">
+          <button class="whatsapp-btn" (click)="goToWhatsApp()" title="Contactar por WhatsApp">
+            <span class="whatsapp-icon">📱</span>
+            <span>Contactar por WhatsApp</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

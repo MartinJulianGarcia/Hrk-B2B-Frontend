@@ -1,19 +1,1 @@
-<div *ngIf="isLoggedIn" class="app-header">
-  <div class="header-content">
-    <div class="user-info">
-      <span class="user-name">{{ currentUser?.nombre }}</span>
-      <span class="user-type">{{ currentUser?.tipo }}</span>
-      <span *ngIf="selectedClient" class="selected-client">
-        Cliente: {{ selectedClient.nombre }}
-      </span>
-    </div>
-    
-    <nav class="main-nav">
-      <a routerLink="/catalog" routerLinkActive="active">Catálogo</a>
-      <a routerLink="/cart" routerLinkActive="active">Carrito</a>
-      <button (click)="logout()" class="logout-btn">Cerrar Sesión</button>
-    </nav>
-  </div>
-</div>
-
 <router-outlet></router-outlet>

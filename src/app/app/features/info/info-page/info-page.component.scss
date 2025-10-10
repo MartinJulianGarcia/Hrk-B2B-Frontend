@@ -1,10 +1,10 @@
-.cart-container {
+.info-container {
   max-width: 100%;
   margin: 0 auto;
   padding: 0;
 }
 
-.cart-header {
+.info-header {
   background: black;
   color: white;
   padding: 15px 20px;
@@ -117,6 +117,12 @@
   font-weight: 400;
 }
 
+.nav-item.active {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
 .header-right {
   display: flex;
   align-items: center;
@@ -136,10 +142,6 @@
 
 .icon-btn:hover {
   background: rgba(255, 255, 255, 0.1);
-}
-
-.icon-btn.active {
-  background: rgba(255, 255, 255, 0.2);
 }
 
 .logout-btn {
@@ -198,174 +200,120 @@
   display: block;
 }
 
-.cart-content {
+.info-content {
   max-width: 800px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 40px 20px;
+  text-align: center;
 }
 
-.cart-items {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-}
-
-.cart-header h3 {
-  margin: 0 0 20px 0;
+.info-content h1 {
+  font-size: 2.5rem;
   color: #333;
+  margin-bottom: 40px;
+  font-weight: 600;
 }
 
-.items-list {
-  margin-bottom: 20px;
-}
-
-.cart-item {
+.faq-container {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px;
-  border-bottom: 1px solid #e1e5e9;
+  flex-direction: column;
+  gap: 30px;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-.cart-item:last-child {
-  border-bottom: none;
-}
-
-.item-info h4 {
-  margin: 0 0 5px 0;
-  color: #333;
-}
-
-.item-info p {
-  margin: 2px 0;
-  color: #666;
-  font-size: 14px;
-}
-
-.item-quantity {
-  font-weight: 500;
-  color: #667eea;
-}
-
-.item-price {
-  text-align: right;
-}
-
-.unit-price {
-  display: block;
-  font-size: 12px;
-  color: #666;
-}
-
-.subtotal {
-  font-weight: 600;
-  color: #333;
-  font-size: 16px;
-}
-
-.cart-total {
-  border-top: 2px solid #e1e5e9;
-  padding-top: 15px;
-}
-
-.total-line {
-  text-align: right;
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
-}
-
-.cart-actions {
-  margin-top: 20px;
-  text-align: center;
-}
-
-.btn-primary {
-  background: #667eea;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  text-decoration: none;
-  display: inline-block;
-}
-
-.btn-primary:hover {
-  background: #5a6fd8;
-  transform: translateY(-2px);
-}
-
-.empty-cart {
-  text-align: center;
-  padding: 60px 20px;
+.faq-item {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e1e5e9;
+  transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.empty-cart h3 {
+.faq-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.faq-item h2 {
+  font-size: 1.5rem;
   color: #333;
-  margin-bottom: 10px;
-}
-
-.empty-cart p {
-  color: #666;
   margin-bottom: 20px;
+  font-weight: 700;
+  text-align: center;
 }
 
-.pedido-section {
-  background: #f8f9fa;
-  border-radius: 12px;
-  padding: 20px;
-  margin-top: 20px;
-}
-
-.pedido-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 15px 0;
-}
-
-.pedido-table th,
-.pedido-table td {
-  padding: 10px;
+.faq-item p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #666;
+  margin-bottom: 15px;
   text-align: left;
-  border-bottom: 1px solid #e1e5e9;
 }
 
-.pedido-table th {
-  background: #f8f9fa;
-  font-weight: 600;
+.faq-item p:last-child {
+  margin-bottom: 0;
 }
 
-.pedido-total {
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
-  margin: 15px 0;
+.whatsapp-container {
+  margin-top: 20px;
+  text-align: center;
 }
 
-.btn-confirm {
-  background: #28a745;
+.whatsapp-btn {
+  background: #25D366;
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
+  padding: 15px 25px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
 }
 
-.btn-confirm:hover:not(:disabled) {
-  background: #218838;
+.whatsapp-btn:hover {
+  background: #20b358;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
 }
 
-.btn-confirm:disabled {
-  background: #ccc;
-  cursor: not-allowed;
+.whatsapp-icon {
+  font-size: 20px;
 }
 
+@media (max-width: 768px) {
+  .info-content {
+    padding: 20px 15px;
+  }
+  
+  .info-content h1 {
+    font-size: 2rem;
+    margin-bottom: 30px;
+  }
+  
+  .faq-item {
+    padding: 20px;
+  }
+  
+  .faq-item h2 {
+    font-size: 1.3rem;
+  }
+  
+  .header-left {
+    gap: 15px;
+  }
+  
+  .main-nav {
+    gap: 10px;
+  }
+  
+  .nav-item {
+    font-size: 12px;
+  }
+}
