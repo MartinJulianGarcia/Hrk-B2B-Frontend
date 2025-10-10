@@ -234,23 +234,40 @@
 .carousel-container {
   position: relative;
   margin-bottom: 40px;
-  padding: 0 10px;
+  padding: 10px 40px; /* Más padding horizontal para evitar cortes laterales */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .carousel-wrapper {
   overflow: hidden;
   border-radius: 12px;
+  position: relative;
+  display: flex;
+  padding: 0 15px; /* Más padding interno para evitar cortes */
+}
+
+.carousel-wrapper.centered {
+  justify-content: center;
 }
 
 .carousel-track {
   display: flex;
   transition: transform 0.3s ease;
+  width: 100%;
+  max-width: 100%;
+}
+
+.carousel-wrapper.centered .carousel-track {
+  width: 440px; /* Un poco más de ancho para evitar cortes laterales */
+  max-width: 440px;
 }
 
 .carousel-item {
-  flex: 0 0 33.333%;
-  padding: 0 10px;
+  padding: 0 10px; /* Padding más consistente */
   cursor: pointer;
+  min-width: 0; /* Asegurar que los elementos respeten el flex */
 }
 
 .product-card {
@@ -260,16 +277,22 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: all 0.3s;
   border: 2px solid transparent;
+  width: 180px; /* Ancho fijo para consistencia exacta */
+  max-width: 180px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1; /* Evitar superposición */
 }
 
 .product-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-2px); /* Movimiento más sutil para evitar cortes */
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .carousel-item.selected .product-card {
   border-color: #667eea;
   background: #f8f9ff;
+  z-index: 2; /* La tarjeta seleccionada va por encima */
 }
 
 .product-image {
@@ -461,14 +484,22 @@
 }
 
 .add-to-cart-btn {
-  background: #333;
-  color: white;
+  background: #e0e0e0;
+  color: #333;
   border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
+  padding: 10px 20px;
+  border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
+  font-size: 14px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.add-to-cart-btn.selected-btn {
+  background: #333;
+  color: white;
 }
 
 .add-to-cart-btn:hover:not(:disabled) {
@@ -533,7 +564,7 @@
   }
   
   .carousel-item {
-    flex: 0 0 50%;
+    flex: 0 0 33.333%; /* 3 elementos en tablet */
     padding: 0 5px;
   }
   
@@ -592,7 +623,7 @@
   }
   
   .carousel-item {
-    flex: 0 0 100%;
+    flex: 0 0 50%; /* 2 elementos en móvil pequeño */
     padding: 0;
   }
   

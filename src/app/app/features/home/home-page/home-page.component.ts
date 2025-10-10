@@ -20,6 +20,8 @@ export class HomePageComponent implements OnInit {
   selectedFilter: 'tejido' | 'plano' = 'tejido';
   currentSlide = 0;
   maxSlide = 0;
+  itemsPerView = 5; // Mostrar 5 elementos
+  showNavigation = false; // Controla si mostrar botones de navegación
   selectedQuantities: { [key: string]: number } = {};
 
   constructor(
@@ -43,37 +45,94 @@ export class HomePageComponent implements OnInit {
   setFilter(filter: 'tejido' | 'plano'): void {
     this.selectedFilter = filter;
     this.applyFilter();
-    this.currentSlide = 0;
   }
 
   applyFilter(): void {
-    // Simular filtro por tipo de material
+    // Filtrar por tipo de material - más amplio para tener más productos
     this.filteredProducts = this.productos.filter(producto => {
       if (this.selectedFilter === 'tejido') {
-        return producto.tipo === 'ROPA' && producto.nombre.toLowerCase().includes('remera');
+        // Productos tejidos: remeras, hoodies
+        return producto.tipo === 'ROPA' && 
+               (producto.nombre.toLowerCase().includes('remera') || 
+                producto.nombre.toLowerCase().includes('hoodie'));
       } else {
-        return producto.tipo === 'ROPA' && !producto.nombre.toLowerCase().includes('remera');
+        // Productos planos: camperas, chalecos
+        return producto.tipo === 'ROPA' && 
+               (producto.nombre.toLowerCase().includes('campera') || 
+                producto.nombre.toLowerCase().includes('chaleco'));
       }
     });
     
-    this.maxSlide = Math.max(0, this.filteredProducts.length - 3);
+    // Lógica de distribución inteligente
+    this.updateCarouselLogic();
+    
+    // Seleccionar el producto apropiado según la cantidad
+    this.updateSelectedProduct();
+  }
+
+  updateCarouselLogic(): void {
+    const productCount = this.filteredProducts.length;
+    
+    if (productCount <= 5) {
+      // Para 5 o menos productos: mostrar todos centrados, sin navegación
+      this.itemsPerView = productCount;
+      this.currentSlide = 0;
+      this.maxSlide = 0;
+      this.showNavigation = false;
+    } else {
+      // Para 6+ productos: carrusel completo con navegación
+      this.itemsPerView = 5;
+      this.currentSlide = 0;
+      this.maxSlide = productCount - 5;
+      this.showNavigation = true;
+    }
   }
 
   previousSlide(): void {
     if (this.currentSlide > 0) {
       this.currentSlide--;
+      this.updateSelectedProduct();
     }
   }
 
   nextSlide(): void {
     if (this.currentSlide < this.maxSlide) {
       this.currentSlide++;
+      this.updateSelectedProduct();
     }
+  }
+
+  updateSelectedProduct(): void {
+    if (this.filteredProducts.length === 0) {
+      this.selectedProduct = null;
+      this.selectedQuantities = {};
+      return;
+    }
+
+    if (this.filteredProducts.length <= 5) {
+      // Para pocos productos: seleccionar el primero (más a la izquierda)
+      this.selectedProduct = this.filteredProducts[0];
+    } else {
+      // Para muchos productos: seleccionar el del medio de los visibles
+      const middleIndex = this.currentSlide + Math.floor(this.itemsPerView / 2);
+      if (middleIndex < this.filteredProducts.length) {
+        this.selectedProduct = this.filteredProducts[middleIndex];
+      }
+    }
+    this.selectedQuantities = {}; // Limpiar cantidades al cambiar producto
   }
 
   selectProduct(producto: ProductoDTO): void {
     this.selectedProduct = producto;
     this.selectedQuantities = {};
+    
+    // Encontrar el índice del producto seleccionado y ajustar el carrusel
+    const productIndex = this.filteredProducts.findIndex(p => p.id === producto.id);
+    if (productIndex !== -1) {
+      // Ajustar currentSlide para que el producto seleccionado esté en el medio
+      const middleOffset = Math.floor(this.itemsPerView / 2);
+      this.currentSlide = Math.max(0, Math.min(this.maxSlide, productIndex - middleOffset));
+    }
   }
 
   getTalles(): string[] {

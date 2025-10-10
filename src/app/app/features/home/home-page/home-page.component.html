@@ -57,6 +57,7 @@
   <!-- Carrusel de productos -->
   <div class="carousel-container">
     <button 
+      *ngIf="showNavigation"
       class="carousel-btn prev" 
       (click)="previousSlide()"
       [disabled]="currentSlide === 0"
@@ -64,14 +65,15 @@
       ‹
     </button>
     
-    <div class="carousel-wrapper">
+    <div class="carousel-wrapper" [class.centered]="!showNavigation">
       <div 
         class="carousel-track" 
-        [style.transform]="'translateX(' + (-currentSlide * 100) + '%)'"
+        [style.transform]="showNavigation ? 'translateX(' + (-currentSlide * (100 / itemsPerView)) + '%)' : 'translateX(0%)'"
       >
         <div 
           *ngFor="let producto of filteredProducts; let i = index" 
           class="carousel-item"
+          [style.flex]="'0 0 calc(100% / ' + itemsPerView + ')'"
           (click)="selectProduct(producto)"
           [class.selected]="selectedProduct?.id === producto.id"
         >
@@ -83,10 +85,14 @@
             </div>
             <div class="product-info">
               <h3>{{ producto.nombre }}</h3>
-              <p>{{ producto.descripcion }}</p>
               <div class="price-range">
-                ${{ getMinPrice(producto) }} - ${{ getMaxPrice(producto) }}
+                TOTAL ${{ getMinPrice(producto) }}
               </div>
+              <button class="add-to-cart-btn" 
+                      [class.selected-btn]="selectedProduct?.id === producto.id"
+                      (click)="selectProduct(producto)">
+                COMPRAR
+              </button>
             </div>
           </div>
         </div>
@@ -94,6 +100,7 @@
     </div>
     
     <button 
+      *ngIf="showNavigation"
       class="carousel-btn next" 
       (click)="nextSlide()"
       [disabled]="currentSlide >= maxSlide"
