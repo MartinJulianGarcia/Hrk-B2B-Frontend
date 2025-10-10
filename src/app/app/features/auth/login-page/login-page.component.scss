@@ -195,3 +195,79 @@
   text-decoration: none;
 }
 
+/* Responsive Design */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 10px;
+  }
+  
+  .login-header {
+    padding: 15px;
+    margin: 5px;
+  }
+  
+  .login-card {
+    padding: 20px;
+    margin: 10px 5px;
+  }
+  
+  .logo {
+    font-size: 16px;
+  }
+  
+  .login-title {
+    font-size: 20px;
+  }
+  
+  .form-control {
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  .btn {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    padding: 5px;
+  }
+  
+  .login-header {
+    padding: 10px;
+    margin: 2px;
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+  
+  .login-card {
+    padding: 15px;
+    margin: 5px 2px;
+  }
+  
+  .logo {
+    font-size: 14px;
+  }
+  
+  .login-title {
+    font-size: 18px;
+  }
+  
+  .form-control {
+    padding: 8px;
+    font-size: 13px;
+  }
+  
+  .btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  
+  .form-group label {
+    font-size: 13px;
+  }
+}
+

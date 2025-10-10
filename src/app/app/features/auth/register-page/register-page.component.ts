@@ -22,13 +22,21 @@ export class RegisterPageComponent {
     cuit: undefined
   };
   cuitFormatted = '';
+  password2 = '';
   loading = false;
   error = '';
+  passwordsMatch = false;
 
   constructor(
     private authService: AuthService,
     private router: Router
   ) {}
+
+  onPasswordChange(): void {
+    this.passwordsMatch = this.userData.password === this.password2 && 
+                         this.userData.password.length >= 6 && 
+                         this.password2.length >= 6;
+  }
 
   onCuitChange(event: any): void {
     let value = event.target.value;
@@ -76,6 +84,13 @@ export class RegisterPageComponent {
 
   onSubmit(): void {
     if (this.loading) return;
+
+    // Verificar que las contraseñas coincidan
+    if (this.userData.password !== this.password2) {
+      this.error = 'Las contraseñas no coinciden';
+      this.showErrorMessage('Las contraseñas no coinciden. Por favor, verifica que ambas contraseñas sean iguales.');
+      return;
+    }
 
     this.loading = true;
     this.error = '';
@@ -128,5 +143,7 @@ export class RegisterPageComponent {
       cuit: undefined
     };
     this.cuitFormatted = '';
+    this.password2 = '';
+    this.passwordsMatch = false;
   }
 }

@@ -68,6 +68,7 @@
           id="password" 
           name="password" 
           [(ngModel)]="userData.password" 
+          (input)="onPasswordChange()"
           required 
           minlength="6"
           #password="ngModel"
@@ -85,9 +86,17 @@
           type="password" 
           id="password2" 
           name="password2" 
+          [(ngModel)]="password2"
+          (input)="onPasswordChange()"
           placeholder="Confirma tu contraseña"
           class="form-control"
         >
+        <div *ngIf="password2 && userData.password && !passwordsMatch" class="error">
+          Las contraseñas no coinciden
+        </div>
+        <div *ngIf="passwordsMatch && password2" class="success">
+          ✓ Las contraseñas coinciden
+        </div>
       </div>
 
 
@@ -101,10 +110,10 @@
 
       <button 
         type="submit" 
-        [disabled]="registerForm.invalid || loading"
+        [disabled]="registerForm.invalid || !passwordsMatch || loading"
         class="btn"
-        [class.btn-primary]="registerForm.invalid || loading"
-        [class.btn-success]="registerForm.valid && !loading"
+        [class.btn-primary]="registerForm.invalid || !passwordsMatch || loading"
+        [class.btn-success]="registerForm.valid && passwordsMatch && !loading"
       >
         Sign Up
       </button>
