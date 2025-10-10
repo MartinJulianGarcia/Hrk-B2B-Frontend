@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { ProductoDTO, ProductsService } from '../../../core/products.service';
 import { CartService } from '../../../core/cart.service';
 import { AuthService } from '../../../core/auth.service';
+import { Categoria } from '../../../core/categories.enum';
 
 @Component({
   selector: 'app-home-page',
@@ -48,18 +49,19 @@ export class HomePageComponent implements OnInit {
   }
 
   applyFilter(): void {
-    // Filtrar por tipo de material - más amplio para tener más productos
+    // Filtrar por categorías específicas
     this.filteredProducts = this.productos.filter(producto => {
       if (this.selectedFilter === 'tejido') {
-        // Productos tejidos: remeras, hoodies
-        return producto.tipo === 'ROPA' && 
-               (producto.nombre.toLowerCase().includes('remera') || 
-                producto.nombre.toLowerCase().includes('hoodie'));
+        // Productos tejidos: remeras, buzos, sweaters
+        return producto.categoria === Categoria.REMERA || 
+               producto.categoria === Categoria.BUZO ||
+               producto.categoria === Categoria.SWEATER;
       } else {
-        // Productos planos: camperas, chalecos
-        return producto.tipo === 'ROPA' && 
-               (producto.nombre.toLowerCase().includes('campera') || 
-                producto.nombre.toLowerCase().includes('chaleco'));
+        // Productos planos: camperas, chalecos, pantalones, shorts
+        return producto.categoria === Categoria.CAMPERA || 
+               producto.categoria === Categoria.CHALECO ||
+               producto.categoria === Categoria.PANTALON ||
+               producto.categoria === Categoria.SHORT;
       }
     });
     

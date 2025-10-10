@@ -79,14 +79,12 @@
         >
           <div class="product-card">
             <div class="product-image">
-              <div class="placeholder-image">
-                {{ producto.nombre.charAt(0) }}
-              </div>
+              <img [src]="producto.imagenUrl" [alt]="producto.nombre" />
             </div>
             <div class="product-info">
               <h3>{{ producto.nombre }}</h3>
               <div class="price-range">
-                TOTAL ${{ getMinPrice(producto) }}
+                Precio: ${{ getMinPrice(producto) }}
               </div>
               <button class="add-to-cart-btn" 
                       [class.selected-btn]="selectedProduct?.id === producto.id"
@@ -113,9 +111,7 @@
   <div *ngIf="selectedProduct" class="product-detail">
     <div class="detail-container">
       <div class="product-image-large">
-        <div class="placeholder-image-large">
-          {{ selectedProduct.nombre.charAt(0) }}
-        </div>
+        <img [src]="selectedProduct.imagenUrl" [alt]="selectedProduct.nombre" />
       </div>
       
       <div class="product-variants">

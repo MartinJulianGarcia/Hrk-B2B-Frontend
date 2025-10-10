@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { Categoria } from './categories.enum';
 
 export interface VarianteDTO {
   id: number; sku: string; color: string; talle: string;
@@ -8,7 +9,7 @@ export interface VarianteDTO {
 export interface CategoriaDTO { id: number; nombre: string; }
 export interface ProductoDTO {
   id: number; nombre: string; descripcion: string;
-  tipo: string; imagenUrl: string; categoria?: CategoriaDTO;
+  tipo: string; imagenUrl: string; categoria: Categoria;
   variantes: VarianteDTO[];
 }
 
@@ -25,8 +26,8 @@ export class ProductsService {
         nombre: 'Remera Básica Tejida',
         descripcion: 'Remera de algodón 100% tejida',
         tipo: 'ROPA',
-        imagenUrl: 'https://via.placeholder.com/300x300?text=Remera',
-        categoria: { id: 1, nombre: 'Ropa' },
+        imagenUrl: '/images/categories/remera.jpg',
+        categoria: Categoria.REMERA,
         variantes: [
           { id: 1, sku: 'REM-S-B', color: 'Blanco', talle: 'S', precio: 1500, stockDisponible: 50 },
           { id: 2, sku: 'REM-M-B', color: 'Blanco', talle: 'M', precio: 1500, stockDisponible: 30 },
@@ -41,8 +42,8 @@ export class ProductsService {
         nombre: 'Hoodie Sirio Tinto',
         descripcion: 'Hoodie con capucha y bolsillo delantero',
         tipo: 'ROPA',
-        imagenUrl: 'https://via.placeholder.com/300x300?text=Hoodie',
-        categoria: { id: 1, nombre: 'Ropa' },
+        imagenUrl: '/images/categories/buzo.jpg',
+        categoria: Categoria.BUZO,
         variantes: [
           { id: 7, sku: 'HOO-S-N', color: 'Negro', talle: 'S', precio: 3500, stockDisponible: 15 },
           { id: 8, sku: 'HOO-M-N', color: 'Negro', talle: 'M', precio: 3500, stockDisponible: 20 },
@@ -57,8 +58,8 @@ export class ProductsService {
         nombre: 'Campera Sherpa Teddy',
         descripcion: 'Campera de sherpa con cierre',
         tipo: 'ROPA',
-        imagenUrl: 'https://via.placeholder.com/300x300?text=Campera',
-        categoria: { id: 1, nombre: 'Ropa' },
+        imagenUrl: '/images/categories/campera.jpg',
+        categoria: Categoria.CAMPERA,
         variantes: [
           { id: 13, sku: 'CAM-S-N', color: 'Negro', talle: 'S', precio: 4500, stockDisponible: 8 },
           { id: 14, sku: 'CAM-M-N', color: 'Negro', talle: 'M', precio: 4500, stockDisponible: 10 },
@@ -73,8 +74,8 @@ export class ProductsService {
         nombre: 'Chaleco Wendbarr Reversible',
         descripcion: 'Chaleco reversible sin mangas',
         tipo: 'ROPA',
-        imagenUrl: 'https://via.placeholder.com/300x300?text=Chaleco',
-        categoria: { id: 1, nombre: 'Ropa' },
+        imagenUrl: '/images/categories/blazer.jpg',
+        categoria: Categoria.CHALECO,
         variantes: [
           { id: 19, sku: 'CHA-S-N', color: 'Negro', talle: 'S', precio: 2800, stockDisponible: 15 },
           { id: 20, sku: 'CHA-M-N', color: 'Negro', talle: 'M', precio: 2800, stockDisponible: 18 },
@@ -86,18 +87,50 @@ export class ProductsService {
       },
       {
         id: 5,
-        nombre: 'Zapatillas Deportivas',
-        descripcion: 'Zapatillas para uso deportivo',
-        tipo: 'CALZADO',
-        imagenUrl: 'https://via.placeholder.com/300x300?text=Zapatillas',
-        categoria: { id: 2, nombre: 'Calzado' },
+        nombre: 'Pantalón Cargo Verde',
+        descripcion: 'Pantalón cargo con bolsillos laterales',
+        tipo: 'ROPA',
+        imagenUrl: '/images/categories/pantalon.jpg',
+        categoria: Categoria.PANTALON,
         variantes: [
-          { id: 25, sku: 'ZAP-38-B', color: 'Blanco', talle: '38', precio: 8000, stockDisponible: 8 },
-          { id: 26, sku: 'ZAP-40-B', color: 'Blanco', talle: '40', precio: 8000, stockDisponible: 10 },
-          { id: 27, sku: 'ZAP-42-B', color: 'Blanco', talle: '42', precio: 8000, stockDisponible: 12 },
-          { id: 28, sku: 'ZAP-38-N', color: 'Negro', talle: '38', precio: 8000, stockDisponible: 6 },
-          { id: 29, sku: 'ZAP-40-N', color: 'Negro', talle: '40', precio: 8000, stockDisponible: 9 },
-          { id: 30, sku: 'ZAP-42-N', color: 'Negro', talle: '42', precio: 8000, stockDisponible: 11 }
+          { id: 25, sku: 'PAN-S-V', color: 'Verde', talle: 'S', precio: 3200, stockDisponible: 8 },
+          { id: 26, sku: 'PAN-M-V', color: 'Verde', talle: 'M', precio: 3200, stockDisponible: 10 },
+          { id: 27, sku: 'PAN-L-V', color: 'Verde', talle: 'L', precio: 3200, stockDisponible: 12 },
+          { id: 28, sku: 'PAN-S-K', color: 'Khaki', talle: 'S', precio: 3200, stockDisponible: 6 },
+          { id: 29, sku: 'PAN-M-K', color: 'Khaki', talle: 'M', precio: 3200, stockDisponible: 9 },
+          { id: 30, sku: 'PAN-L-K', color: 'Khaki', talle: 'L', precio: 3200, stockDisponible: 11 }
+        ]
+      },
+      {
+        id: 6,
+        nombre: 'Short Deportivo Negro',
+        descripcion: 'Short cómodo para deporte',
+        tipo: 'ROPA',
+        imagenUrl: '/images/categories/short.jpg',
+        categoria: Categoria.SHORT,
+        variantes: [
+          { id: 31, sku: 'SHO-S-N', color: 'Negro', talle: 'S', precio: 1800, stockDisponible: 15 },
+          { id: 32, sku: 'SHO-M-N', color: 'Negro', talle: 'M', precio: 1800, stockDisponible: 18 },
+          { id: 33, sku: 'SHO-L-N', color: 'Negro', talle: 'L', precio: 1800, stockDisponible: 12 },
+          { id: 34, sku: 'SHO-S-A', color: 'Azul', talle: 'S', precio: 1800, stockDisponible: 10 },
+          { id: 35, sku: 'SHO-M-A', color: 'Azul', talle: 'M', precio: 1800, stockDisponible: 14 },
+          { id: 36, sku: 'SHO-L-A', color: 'Azul', talle: 'L', precio: 1800, stockDisponible: 8 }
+        ]
+      },
+      {
+        id: 7,
+        nombre: 'Sweater de Lana',
+        descripcion: 'Sweater cálido de lana natural',
+        tipo: 'ROPA',
+        imagenUrl: '/images/categories/sweater.jpg',
+        categoria: Categoria.SWEATER,
+        variantes: [
+          { id: 37, sku: 'SWE-S-G', color: 'Gris', talle: 'S', precio: 4200, stockDisponible: 5 },
+          { id: 38, sku: 'SWE-M-G', color: 'Gris', talle: 'M', precio: 4200, stockDisponible: 7 },
+          { id: 39, sku: 'SWE-L-G', color: 'Gris', talle: 'L', precio: 4200, stockDisponible: 6 },
+          { id: 40, sku: 'SWE-S-B', color: 'Beige', talle: 'S', precio: 4200, stockDisponible: 4 },
+          { id: 41, sku: 'SWE-M-B', color: 'Beige', talle: 'M', precio: 4200, stockDisponible: 8 },
+          { id: 42, sku: 'SWE-L-B', color: 'Beige', talle: 'L', precio: 4200, stockDisponible: 5 }
         ]
       }
     ];
