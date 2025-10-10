@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 
 export interface Usuario {
   id: number;
@@ -30,6 +30,7 @@ export interface RegisterRequest {
   tipo: 'VENDEDOR' | 'CLIENTE';
   telefono?: string;
   direccion?: string;
+  cuit?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -63,7 +64,28 @@ export class AuthService {
   ];
 
   login(credentials: LoginRequest): Observable<Usuario> {
-    // Mock login - en producción sería una llamada HTTP real
+    // Primero buscar en usuarios registrados en localStorage
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+      const registeredUser = registeredUsers.find((u: any) => 
+        u.email === credentials.email && u.password === credentials.password
+      );
+      
+      if (registeredUser) {
+        const user = {
+          id: registeredUser.id,
+          nombre: registeredUser.nombre,
+          email: registeredUser.email,
+          tipo: registeredUser.tipo,
+          activo: registeredUser.activo
+        };
+        this.currentUserSubject.next(user);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        return of(user);
+      }
+    }
+    
+    // Fallback a usuarios mock
     const user = this.mockUsers.find(u => u.email === credentials.email);
     
     if (user && credentials.password === '123456') { // Password mock
@@ -74,7 +96,7 @@ export class AuthService {
       return of(user);
     }
     
-    throw new Error('Credenciales inválidas');
+    return throwError(() => new Error('Credenciales inválidas'));
   }
 
   register(userData: RegisterRequest): Observable<Usuario> {
@@ -88,6 +110,19 @@ export class AuthService {
     };
     
     this.mockUsers.push(newUser);
+    
+    // Guardar en localStorage
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+      const userWithPassword = {
+        ...newUser,
+        password: userData.password,
+        cuit: userData.cuit
+      };
+      users.push(userWithPassword);
+      localStorage.setItem('registeredUsers', JSON.stringify(users));
+    }
+    
     return of(newUser);
   }
 

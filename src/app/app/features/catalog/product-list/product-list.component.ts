@@ -10,25 +10,8 @@ import { RouterLink } from '@angular/router';
   selector: 'app-product-list',
   standalone: true,
   imports: [NgFor, NgIf, ProductGridComponent, RouterLink],
-  template: `
-    <h2>Catálogo</h2>
-    <div *ngIf="loading">Cargando…</div>
-    <div *ngIf="error" style="color:#c00">{{ error }}</div>
-
-    <div *ngFor="let p of productos" class="card" style="margin-bottom:20px;">
-      <div style="display:flex; gap:16px; align-items:center;">
-        <img [src]="p.imagenUrl" alt="{{p.nombre}}" width="100">
-        <div>
-          <h3>{{ p.nombre }}</h3>
-          <div>{{ p.descripcion }}</div>
-        </div>
-      </div>
-
-      <app-product-grid [producto]="p" (add)="onAdd($event.varianteId, $event.cantidad)"></app-product-grid>
-    </div>
-
-    <a routerLink="/cart">Ir al carrito / nota</a>
-  `
+  templateUrl: './product-list.component.html',
+  styleUrls: ['./product-list.component.scss']
 })
 export class ProductListComponent implements OnInit {
   productos: ProductoDTO[] = [];

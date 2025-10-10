@@ -1,0 +1,20 @@
+<div class="product-list-container">
+  <h2>Catálogo</h2>
+  <div *ngIf="loading" class="loading">Cargando…</div>
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <div *ngFor="let p of productos" class="card">
+    <div class="product-header">
+      <img [src]="p.imagenUrl" alt="{{p.nombre}}" width="100">
+      <div class="product-info">
+        <h3>{{ p.nombre }}</h3>
+        <div>{{ p.descripcion }}</div>
+      </div>
+    </div>
+
+    <app-product-grid [producto]="p" (add)="onAdd($event.varianteId, $event.cantidad)"></app-product-grid>
+  </div>
+
+  <a routerLink="/cart" class="btn-cart">Ir al carrito / nota</a>
+</div>
+
