@@ -1,24 +1,83 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { tap, catchError } from 'rxjs/operators';
 import { Categoria } from './categories.enum';
 
 export interface VarianteDTO {
-  id: number; sku: string; color: string; talle: string;
-  precio: number; stockDisponible: number;
+  id: number; 
+  sku: string; 
+  color: string; 
+  talle: string;
+  precio: number; 
+  stockDisponible: number;
 }
-export interface CategoriaDTO { id: number; nombre: string; }
+
+export interface CategoriaDTO { 
+  id: number; 
+  nombre: string; 
+}
+
+// Interfaz que coincide con ProductoResponseDTO del backend
 export interface ProductoDTO {
-  id: number; nombre: string; descripcion: string;
-  tipo: string; imagenUrl: string; categoria: Categoria;
+  id: number; 
+  nombre: string; 
+  descripcion: string;
+  tipo: string; 
+  imagenUrl: string; 
+  categoria: string; // Backend devuelve string del enum
   variantes: VarianteDTO[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class ProductsService {
-  private base = '/api/productos';
-  constructor() {}
+  private readonly API_URL = 'http://localhost:8081/api';
+  
+  constructor(private http: HttpClient) {}
   
   list(): Observable<ProductoDTO[]> {
+    console.log('🔵 [FRONTEND] Obteniendo productos desde la API...');
+    return this.http.get<ProductoDTO[]>(`${this.API_URL}/productos`).pipe(
+      tap(products => console.log('🔵 [FRONTEND] Productos recibidos:', products)),
+      catchError(error => {
+        console.error('🔴 [FRONTEND] Error al obtener productos:', error);
+        // Fallback a mock data si hay error
+        console.log('🟡 [FRONTEND] Usando datos mock como fallback');
+        return this.getMockProducts();
+      })
+    );
+  }
+
+  createProduct(productData: any): Observable<any> {
+    console.log('🔵 [FRONTEND] Datos enviados:', productData);
+    
+    // Validar que los campos requeridos no sean null o undefined
+    if (!productData.tipo || !productData.categoria) {
+      console.error('🔴 [FRONTEND] Error: Tipo o categoría vacíos', {
+        tipo: productData.tipo,
+        categoria: productData.categoria
+      });
+      throw new Error('Tipo y categoría son obligatorios');
+    }
+    
+    const request = {
+      nombre: productData.nombre,
+      tipo: productData.tipo, // Ya viene como string del formulario
+      categoria: productData.categoria, // Ya viene como string del formulario
+      sku: productData.sku,
+      colores: productData.colores || [],
+      talles: productData.talles || [],
+      precio: productData.precio,
+      stock: productData.stock,
+      descripcion: productData.descripcion || '',
+      imagenUrl: productData.imagen ? 'uploaded-image-url' : null // TODO: Implementar subida real
+    };
+
+    console.log('🔵 [FRONTEND] Request al backend:', request);
+    return this.http.post(`${this.API_URL}/productos`, request);
+  }
+
+  private getMockProducts(): Observable<ProductoDTO[]> {
     // Mock data para desarrollo
     const mockProducts: ProductoDTO[] = [
       {

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 import { OrdersService, ItemPedido } from './orders.service';
 
 export interface PedidoDetalleDTO {
@@ -31,7 +32,10 @@ export class CartService {
   private carritoItems: CarritoItemDTO[] = [];
   private carritoId?: number;
   
-  constructor(private ordersService: OrdersService) {}
+  constructor(
+    private ordersService: OrdersService,
+    private http: HttpClient
+  ) {}
 
   crear(clienteId: number): Observable<number> {
     // Mock: simular creación de carrito
@@ -46,44 +50,64 @@ export class CartService {
   }
   
   agregarItem(carritoId: number, varianteId: number, cantidad: number): Observable<void> {
-    // Mock: simular agregado de item
     return new Observable(observer => {
-      setTimeout(() => {
-        // Simular datos de la variante (en producción vendría del backend)
-        const mockVariante = {
-          id: varianteId,
-          sku: `SKU-${varianteId}`,
-          color: 'Negro',
-          talle: 'M',
-          precio: 1500,
-          productoNombre: 'Producto Mock'
-        };
-
-        // Buscar si ya existe el item
-        const existingItem = this.carritoItems.find(item => item.varianteId === varianteId);
-        
-        if (existingItem) {
-          existingItem.cantidad += cantidad;
-          existingItem.subtotal = existingItem.cantidad * existingItem.precioUnitario;
-        } else {
-          const newItem: CarritoItemDTO = {
-            id: this.carritoItems.length + 1,
-            varianteId: varianteId,
-            cantidad: cantidad,
-            precioUnitario: mockVariante.precio,
-            sku: mockVariante.sku,
-            color: mockVariante.color,
-            talle: mockVariante.talle,
-            productoNombre: mockVariante.productoNombre,
-            subtotal: cantidad * mockVariante.precio
-          };
-          this.carritoItems.push(newItem);
+      // Obtener datos reales de la variante del backend
+      this.http.get<any>(`http://localhost:8081/api/productos`).subscribe({
+        next: (productos) => {
+          // Buscar la variante en todos los productos
+          let varianteEncontrada = null;
+          let productoPadre = null;
+          
+          for (const producto of productos) {
+            const variante = producto.variantes?.find((v: any) => v.id === varianteId);
+            if (variante) {
+              varianteEncontrada = variante;
+              productoPadre = producto;
+              break;
+            }
+          }
+          
+          if (!varianteEncontrada || !productoPadre) {
+            console.error(`Variante ${varianteId} no encontrada`);
+            observer.error('Variante no encontrada');
+            return;
+          }
+          
+          console.log('🔵 [CART SERVICE] Variante encontrada:', varianteEncontrada);
+          console.log('🔵 [CART SERVICE] Producto padre:', productoPadre);
+          
+          // Buscar si ya existe el item en el carrito
+          const existingItem = this.carritoItems.find(item => item.varianteId === varianteId);
+          
+          if (existingItem) {
+            existingItem.cantidad += cantidad;
+            existingItem.subtotal = existingItem.cantidad * existingItem.precioUnitario;
+          } else {
+            const newItem: CarritoItemDTO = {
+              id: this.carritoItems.length + 1,
+              varianteId: varianteId,
+              cantidad: cantidad,
+              precioUnitario: varianteEncontrada.precio,
+              sku: varianteEncontrada.sku,
+              color: varianteEncontrada.color,
+              talle: varianteEncontrada.talle,
+              productoNombre: productoPadre.nombre,
+              subtotal: cantidad * varianteEncontrada.precio
+            };
+            this.carritoItems.push(newItem);
+          }
+          
+          console.log(`Agregando ${cantidad} unidades de variante ${varianteId} al carrito ${carritoId}`);
+          console.log('🔵 [CART SERVICE] Carrito actualizado:', this.carritoItems);
+          
+          observer.next();
+          observer.complete();
+        },
+        error: (error) => {
+          console.error('Error al obtener productos:', error);
+          observer.error(error);
         }
-
-        console.log(`Agregando ${cantidad} unidades de variante ${varianteId} al carrito ${carritoId}`);
-        observer.next();
-        observer.complete();
-      }, 200);
+      });
     });
   }
   

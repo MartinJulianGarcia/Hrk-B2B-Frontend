@@ -8,6 +8,7 @@ import { HomePageComponent } from './app/features/home/home-page/home-page.compo
 import { InfoPageComponent } from './app/features/info/info-page/info-page.component';
 import { ProfilePageComponent } from './app/features/profile/profile-page/profile-page.component';
 import { OrdersHistoryPageComponent } from './app/features/orders/orders-history-page/orders-history-page.component';
+import { AddProductPageComponent } from './app/features/admin/add-product-page/add-product-page.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -18,5 +19,6 @@ export const routes: Routes = [
   { path: 'cart', component: CartPageComponent },
   { path: 'info', component: InfoPageComponent },
   { path: 'profile', component: ProfilePageComponent },
-  { path: 'orders-history', component: OrdersHistoryPageComponent }
+  { path: 'orders-history', component: OrdersHistoryPageComponent },
+  { path: 'add-product', component: AddProductPageComponent }
 ];

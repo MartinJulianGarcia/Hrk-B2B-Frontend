@@ -53,6 +53,13 @@
         Plano
       </button>
     </div>
+    
+    <!-- Botón de agregar producto solo para ADMIN -->
+    <div class="admin-actions" *ngIf="isAdmin()">
+      <button class="add-product-btn" (click)="goToAddProduct()">
+        ➕ Agregar Producto
+      </button>
+    </div>
   </div>
 
   <!-- Carrusel de productos -->

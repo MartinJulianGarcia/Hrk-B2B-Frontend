@@ -51,19 +51,14 @@ export class HomePageComponent implements OnInit {
   }
 
   applyFilter(): void {
-    // Filtrar por categorías específicas
+    // Filtrar por categorías específicas usando los valores de la API
     this.filteredProducts = this.productos.filter(producto => {
       if (this.selectedFilter === 'tejido') {
-        // Productos tejidos: remeras, buzos, sweaters
-        return producto.categoria === Categoria.REMERA || 
-               producto.categoria === Categoria.BUZO ||
-               producto.categoria === Categoria.SWEATER;
+        // Productos tejidos: usar TEJIDO
+        return producto.categoria === 'TEJIDO';
       } else {
-        // Productos planos: camperas, chalecos, pantalones, shorts
-        return producto.categoria === Categoria.CAMPERA || 
-               producto.categoria === Categoria.CHALECO ||
-               producto.categoria === Categoria.PANTALON ||
-               producto.categoria === Categoria.SHORT;
+        // Productos planos: usar PLANO
+        return producto.categoria === 'PLANO';
       }
     });
     
@@ -141,12 +136,108 @@ export class HomePageComponent implements OnInit {
 
   getTalles(): string[] {
     if (!this.selectedProduct) return [];
-    return Array.from(new Set(this.selectedProduct.variantes.map(v => v.talle))).sort();
+    
+    // Extraer todos los talles únicos
+    const tallesUnicos = new Set<string>();
+    
+    this.selectedProduct.variantes.forEach(variante => {
+      const talle = variante.talle.trim();
+      // Normalizar el talle para la UI
+      const talleNormalizado = this.normalizarTalle(talle);
+      // Agregar "Talle" como prefijo para la UI
+      tallesUnicos.add(`Talle ${talleNormalizado}`);
+    });
+    
+    // Ordenar los talles de manera inteligente
+    return Array.from(tallesUnicos).sort((a, b) => {
+      const talleA = a.replace('Talle ', '');
+      const talleB = b.replace('Talle ', '');
+      
+      // "Único" siempre va al final
+      if (talleA === 'Único' && talleB !== 'Único') return 1;
+      if (talleA !== 'Único' && talleB === 'Único') return -1;
+      if (talleA === 'Único' && talleB === 'Único') return 0;
+      
+      // Si ambos son números, ordenar numéricamente
+      const numA = parseInt(talleA);
+      const numB = parseInt(talleB);
+      if (!isNaN(numA) && !isNaN(numB)) {
+        return numA - numB;
+      }
+      
+      // Si uno es número y otro letra, los números van primero
+      if (!isNaN(numA) && isNaN(numB)) {
+        return -1;
+      }
+      if (isNaN(numA) && !isNaN(numB)) {
+        return 1;
+      }
+      
+      // Si ambos son letras, ordenar según el orden estándar de talles
+      const ordenTalles = ['XS', 'S', 'M', 'L', 'XL'];
+      const posA = ordenTalles.indexOf(talleA.toUpperCase());
+      const posB = ordenTalles.indexOf(talleB.toUpperCase());
+      
+      // Si ambos están en el orden estándar, usar ese orden
+      if (posA !== -1 && posB !== -1) {
+        return posA - posB;
+      }
+      
+      // Si solo uno está en el orden estándar, ese va primero
+      if (posA !== -1) return -1;
+      if (posB !== -1) return 1;
+      
+      // Si ninguno está en el orden estándar, ordenar alfabéticamente
+      return talleA.localeCompare(talleB);
+    });
   }
 
   getColores(): string[] {
     if (!this.selectedProduct) return [];
     return Array.from(new Set(this.selectedProduct.variantes.map(v => v.color))).sort();
+  }
+
+  findVariante(color: string, talle: string) {
+    if (!this.selectedProduct || !this.selectedProduct.variantes) {
+      return null;
+    }
+    
+    // Extraer el valor del talle (ej: "Talle 1" -> "1", "Talle TU" -> "TU")
+    const valorTalle = talle.replace('Talle ', '');
+    
+    // Buscar la variante que coincida exactamente con el color y tenga ese talle específico
+    return this.selectedProduct.variantes.find(v => 
+      v.color === color && this.talleMatches(v.talle, valorTalle)
+    );
+  }
+
+  private talleMatches(varianteTalle: string, numeroTalle: string): boolean {
+    // Normalizar talles para manejar inconsistencias del backend
+    const talleVariante = this.normalizarTalle(varianteTalle.trim());
+    const talleBuscado = this.normalizarTalle(numeroTalle.trim());
+    
+    return talleVariante === talleBuscado;
+  }
+
+  private normalizarTalle(talle: string): string {
+    // Mapear inconsistencias del backend
+    const mapeoTalles: { [key: string]: string } = {
+      'U': 'Único',    // Talle Único (normalizado por el backend)
+      'TU': 'Único',   // Talle Único (legacy)
+      'UNICO': 'Único', // Talle Único (legacy)
+      'T3': '3',       // Talle 3 (legacy)
+      '3': '3',        // Talle 3
+      '1': '1',        // Talle 1
+      '2': '2',        // Talle 2
+      '4': '4',        // Talle 4
+      '5': '5',        // Talle 5
+      'S': 'S',        // Talle S
+      'M': 'M',        // Talle M
+      'L': 'L',        // Talle L
+      'XL': 'XL'       // Talle XL
+    };
+    
+    return mapeoTalles[talle.toUpperCase()] || talle;
   }
 
   getQuantity(color: string, talle: string): number {
@@ -155,15 +246,19 @@ export class HomePageComponent implements OnInit {
   }
 
   updateQuantity(color: string, talle: string, event: any): void {
+    const quantity = Number(event.target.value) || 0;
     const key = `${color}-${talle}`;
-    const quantity = parseInt(event.target.value) || 0;
-    this.selectedQuantities[key] = quantity;
+    
+    if (quantity > 0) {
+      this.selectedQuantities[key] = quantity;
+    } else {
+      delete this.selectedQuantities[key];
+    }
   }
 
   getStock(color: string, talle: string): number {
-    if (!this.selectedProduct) return 0;
-    const variante = this.selectedProduct.variantes.find(v => v.color === color && v.talle === talle);
-    return variante?.stockDisponible || 0;
+    const variante = this.findVariante(color, talle);
+    return variante ? variante.stockDisponible : 0;
   }
 
   getMinPrice(producto: ProductoDTO): number {
@@ -191,19 +286,45 @@ export class HomePageComponent implements OnInit {
     // Crear carrito si no existe
     this.cartService.crear(clienteId).subscribe(carritoId => {
       // Agregar items seleccionados
+      const itemsToAdd: { variante: any, quantity: number, color: string, talle: string }[] = [];
+      
       Object.entries(this.selectedQuantities).forEach(([key, quantity]) => {
         if (quantity > 0) {
-          const [color, talle] = key.split('-');
-          const variante = this.selectedProduct!.variantes.find(v => v.color === color && v.talle === talle);
+          const parts = key.split('-');
+          const color = parts[0];
+          const talle = parts.slice(1).join('-'); // El talle puede contener "-" (ej: "Talle 1")
+          
+          const variante = this.findVariante(color, talle);
           if (variante) {
-            this.cartService.agregarItem(carritoId, variante.id, quantity).subscribe(() => {
-              // Mostrar mensaje de éxito
-              alert(`Se agregaron ${quantity} unidades al carrito`);
-              // Actualizar contador del carrito
-              this.updateCartCount();
-            });
+            itemsToAdd.push({ variante, quantity, color, talle });
           }
         }
+      });
+
+      // Agregar todos los items al carrito
+      let completedItems = 0;
+      const totalItems = itemsToAdd.length;
+      
+      if (totalItems === 0) return;
+      
+      itemsToAdd.forEach(({ variante, quantity, color, talle }) => {
+        const numeroTalle = talle.replace('Talle ', '');
+        
+        this.cartService.agregarItem(carritoId, variante.id, quantity).subscribe({
+          next: () => {
+            completedItems++;
+            
+            if (completedItems === totalItems) {
+              // Mostrar mensaje de éxito final
+              alert(`Se agregaron todos los items al carrito`);
+              this.updateCartCount();
+            }
+          },
+          error: (error) => {
+            console.error('Error al agregar item al carrito:', error);
+            alert('Error al agregar el producto al carrito');
+          }
+        });
       });
       
       // Limpiar selección
@@ -234,6 +355,14 @@ export class HomePageComponent implements OnInit {
 
   goToHistory(): void {
     this.router.navigate(['/orders-history']);
+  }
+
+  goToAddProduct(): void {
+    this.router.navigate(['/add-product']);
+  }
+
+  isAdmin(): boolean {
+    return this.authService.isAdmin();
   }
 
   updateCartCount(): void {
