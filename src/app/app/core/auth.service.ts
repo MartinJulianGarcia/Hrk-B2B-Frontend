@@ -1,11 +1,15 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { map, catchError } from 'rxjs/operators';
 
 export interface Usuario {
   id: number;
-  nombre: string;
+  nombreRazonSocial: string;
   email: string;
-  tipo: 'VENDEDOR' | 'CLIENTE';
+  cuit: string;
+  tipoUsuario: 'CLIENTE' | 'ADMIN';
+  fechaCreacion: string;
   activo: boolean;
 }
 
@@ -24,38 +28,41 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
-  nombre: string;
+  nombreRazonSocial: string;
+  cuit: string;
   email: string;
   password: string;
-  tipo: 'VENDEDOR' | 'CLIENTE';
-  telefono?: string;
-  direccion?: string;
-  cuit?: number;
+}
+
+export interface AuthResponse {
+  token: string;
+  usuario: Usuario;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private currentUserSubject = new BehaviorSubject<Usuario | null>(null);
   private selectedClientSubject = new BehaviorSubject<Cliente | null>(null);
+  private tokenSubject = new BehaviorSubject<string | null>(null);
   
   public currentUser$ = this.currentUserSubject.asObservable();
   public selectedClient$ = this.selectedClientSubject.asObservable();
+  
+  private readonly API_URL = 'http://localhost:8081/api';
 
-  constructor() {
+  constructor(private http: HttpClient) {
     // Verificar si hay usuario logueado en localStorage (solo en el cliente)
     if (typeof window !== 'undefined' && window.localStorage) {
       const savedUser = localStorage.getItem('currentUser');
-      if (savedUser) {
+      const savedToken = localStorage.getItem('token');
+      if (savedUser && savedToken) {
         this.currentUserSubject.next(JSON.parse(savedUser));
+        this.tokenSubject.next(savedToken);
       }
     }
   }
 
-  // Mock data para desarrollo
-  private mockUsers: Usuario[] = [
-    { id: 1, nombre: 'Juan Vendedor', email: 'vendedor@empresa.com', tipo: 'VENDEDOR', activo: true },
-    { id: 2, nombre: 'María Vendedora', email: 'maria@empresa.com', tipo: 'VENDEDOR', activo: true }
-  ];
+  // Mock data para desarrollo (ya no se usa, todo viene del backend)
 
   private mockClients: Cliente[] = [
     { id: 1, nombre: 'Distribuidora Norte', email: 'norte@dist.com', telefono: '011-1234-5678', direccion: 'Av. Corrientes 1234', activo: true },
@@ -64,74 +71,71 @@ export class AuthService {
   ];
 
   login(credentials: LoginRequest): Observable<Usuario> {
-    // Primero buscar en usuarios registrados en localStorage
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-      const registeredUser = registeredUsers.find((u: any) => 
-        u.email === credentials.email && u.password === credentials.password
+    return this.http.post<AuthResponse>(`${this.API_URL}/auth/login`, credentials)
+      .pipe(
+        map(response => {
+          // Guardar token y usuario
+          if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('currentUser', JSON.stringify(response.usuario));
+          }
+          
+          this.tokenSubject.next(response.token);
+          this.currentUserSubject.next(response.usuario);
+          return response.usuario;
+        }),
+        catchError(error => {
+          console.error('Error en login:', error);
+          return throwError(() => new Error('Credenciales inválidas'));
+        })
       );
-      
-      if (registeredUser) {
-        const user = {
-          id: registeredUser.id,
-          nombre: registeredUser.nombre,
-          email: registeredUser.email,
-          tipo: registeredUser.tipo,
-          activo: registeredUser.activo
-        };
-        this.currentUserSubject.next(user);
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        return of(user);
-      }
-    }
-    
-    // Fallback a usuarios mock
-    const user = this.mockUsers.find(u => u.email === credentials.email);
-    
-    if (user && credentials.password === '123456') { // Password mock
-      this.currentUserSubject.next(user);
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem('currentUser', JSON.stringify(user));
-      }
-      return of(user);
-    }
-    
-    return throwError(() => new Error('Credenciales inválidas'));
   }
 
   register(userData: RegisterRequest): Observable<Usuario> {
-    // Mock register - en producción sería una llamada HTTP real
-    const newUser: Usuario = {
-      id: this.mockUsers.length + 1,
-      nombre: userData.nombre,
-      email: userData.email,
-      tipo: userData.tipo,
-      activo: true
-    };
+    console.log('🔵 [FRONTEND] Enviando petición de registro:', userData);
+    console.log('🔵 [FRONTEND] URL:', `${this.API_URL}/auth/register`);
     
-    this.mockUsers.push(newUser);
-    
-    // Guardar en localStorage
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-      const userWithPassword = {
-        ...newUser,
-        password: userData.password,
-        cuit: userData.cuit
-      };
-      users.push(userWithPassword);
-      localStorage.setItem('registeredUsers', JSON.stringify(users));
-    }
-    
-    return of(newUser);
+    return this.http.post<AuthResponse>(`${this.API_URL}/auth/register`, userData)
+      .pipe(
+        map(response => {
+          // ✅ CRÍTICO: Validar que response no sea null
+          if (!response || !response.token || !response.usuario) {
+            throw new Error('Respuesta de registro incompleta o inválida.');
+          }
+          
+          // Guardar token y usuario
+          if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('currentUser', JSON.stringify(response.usuario));
+          }
+          
+          this.tokenSubject.next(response.token);
+          this.currentUserSubject.next(response.usuario);
+          return response.usuario;
+        }),
+        catchError(error => {
+          console.error('Error en registro:', error);
+          let errorMessage = 'Error al registrar usuario';
+          
+          if (error.error && error.error.message) {
+            errorMessage = error.error.message;
+          } else if (error.status === 400) {
+            errorMessage = 'Datos inválidos. Verifica que el email y CUIT no estén registrados.';
+          }
+          
+          return throwError(() => new Error(errorMessage));
+        })
+      );
   }
 
   logout(): void {
     this.currentUserSubject.next(null);
     this.selectedClientSubject.next(null);
+    this.tokenSubject.next(null);
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.removeItem('currentUser');
       localStorage.removeItem('selectedClient');
+      localStorage.removeItem('token');
     }
   }
 
@@ -143,8 +147,44 @@ export class AuthService {
     return this.currentUserSubject.value !== null;
   }
 
-  isVendedor(): boolean {
-    return this.currentUserSubject.value?.tipo === 'VENDEDOR';
+  isAdmin(): boolean {
+    return this.currentUserSubject.value?.tipoUsuario === 'ADMIN';
+  }
+
+  getToken(): string | null {
+    return this.tokenSubject.value;
+  }
+
+  getAuthHeaders(): HttpHeaders {
+    const token = this.getToken();
+    return new HttpHeaders({
+      'Authorization': token ? `Bearer ${token}` : '',
+      'Content-Type': 'application/json'
+    });
+  }
+
+  // Método para cambiar el rol del usuario
+  cambiarRol(usuarioId: number, nuevoRol: 'CLIENTE' | 'ADMIN'): Observable<Usuario> {
+    return this.http.put<Usuario>(`${this.API_URL}/usuarios/${usuarioId}/rol`, 
+      { tipoUsuario: nuevoRol }, 
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      map(usuarioActualizado => {
+        // Actualizar el usuario actual si es el mismo
+        const currentUser = this.getCurrentUser();
+        if (currentUser && currentUser.id === usuarioActualizado.id) {
+          this.currentUserSubject.next(usuarioActualizado);
+          if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.setItem('currentUser', JSON.stringify(usuarioActualizado));
+          }
+        }
+        return usuarioActualizado;
+      }),
+      catchError(error => {
+        console.error('Error al cambiar rol:', error);
+        return throwError(() => new Error('Error al cambiar rol'));
+      })
+    );
   }
 
   // Métodos para selección de cliente (solo para vendedores)
@@ -170,19 +210,5 @@ export class AuthService {
     }
   }
 
-  // Método para acceso demo sin autenticación
-  accesoDemo(): void {
-    const demoUser: Usuario = {
-      id: 999,
-      nombre: 'Usuario Demo',
-      email: 'demo@empresa.com',
-      tipo: 'CLIENTE',
-      activo: true
-    };
-
-    this.currentUserSubject.next(demoUser);
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('currentUser', JSON.stringify(demoUser));
-    }
-  }
+  // Método para acceso demo sin autenticación (deshabilitado, usar backend)
 }

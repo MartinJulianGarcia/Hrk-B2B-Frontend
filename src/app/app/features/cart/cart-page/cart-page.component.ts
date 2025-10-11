@@ -18,6 +18,7 @@ export class CartPageComponent implements OnInit {
   carritoItems: CarritoItemDTO[] = [];
   totalCarrito = 0;
   cantidadItems = 0;
+  cartItemCount = 0; // Contador de items en el carrito
 
   constructor(
     private cart: CartService, 
@@ -32,6 +33,7 @@ export class CartPageComponent implements OnInit {
       if (id) this.carritoId = Number(id);
     }
     this.loadCarritoItems();
+    this.updateCartCount();
   }
 
   loadCarritoItems(): void {
@@ -47,7 +49,8 @@ export class CartPageComponent implements OnInit {
 
   confirmar() {
     if (!this.pedido) return;
-    this.orders.confirmar(this.pedido.id).subscribe(p => this.pedido = p);
+    // TODO: Implementar confirmación de pedido cuando se agregue al backend
+    console.log('Confirmar pedido:', this.pedido.id);
   }
 
   logout(): void {
@@ -68,7 +71,36 @@ export class CartPageComponent implements OnInit {
   }
 
   goToHistory(): void {
-    // Por ahora redirige al catálogo, más adelante se puede crear una página de historial
-    this.router.navigate(['/catalog']);
+    this.router.navigate(['/orders-history']);
+  }
+
+  generarPedido(): void {
+    if (this.carritoItems.length === 0) {
+      alert('El carrito está vacío');
+      return;
+    }
+
+    // Obtener cliente ID
+    const currentUser = this.authService.getCurrentUser();
+    const selectedClient = this.authService.getSelectedClient();
+    const clienteId = currentUser?.id; // Simplificado: siempre usar el ID del usuario actual
+    
+    if (!clienteId) {
+      alert('Error: No se pudo identificar al cliente');
+      return;
+    }
+
+    // Generar pedido
+    this.cart.generarPedido(clienteId).subscribe(pedidoId => {
+      alert(`Pedido generado exitosamente. Número de pedido: ${pedidoId}`);
+      this.loadCarritoItems(); // Recargar items (debería estar vacío ahora)
+      this.router.navigate(['/orders-history']);
+    }, error => {
+      alert('Error al generar el pedido: ' + error.message);
+    });
+  }
+
+  updateCartCount(): void {
+    this.cartItemCount = this.cart.getCantidadItems();
   }
 }

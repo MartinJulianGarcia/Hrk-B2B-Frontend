@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { OrdersService, ItemPedido } from './orders.service';
 
 export interface PedidoDetalleDTO {
   varianteId: number; cantidad: number; precioUnitario: number;
@@ -30,7 +31,7 @@ export class CartService {
   private carritoItems: CarritoItemDTO[] = [];
   private carritoId?: number;
   
-  constructor() {}
+  constructor(private ordersService: OrdersService) {}
 
   crear(clienteId: number): Observable<number> {
     // Mock: simular creación de carrito
@@ -127,5 +128,29 @@ export class CartService {
 
   limpiarCarrito(): void {
     this.carritoItems = [];
+  }
+
+  // Generar pedido desde el carrito
+  generarPedido(clienteId: number): Observable<number> {
+    if (this.carritoItems.length === 0) {
+      throw new Error('El carrito está vacío');
+    }
+
+    const items: ItemPedido[] = this.carritoItems.map(item => ({
+      id: item.id,
+      productoId: 0, // Se puede obtener del servicio de productos
+      varianteId: item.varianteId,
+      cantidad: item.cantidad,
+      precioUnitario: item.precioUnitario,
+      subtotal: item.subtotal
+    }));
+
+    return new Observable(observer => {
+      this.ordersService.crearPedido(clienteId, items).subscribe(pedido => {
+        this.limpiarCarrito(); // Limpiar carrito después de crear pedido
+        observer.next(pedido.id);
+        observer.complete();
+      });
+    });
   }
 }

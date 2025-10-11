@@ -1,0 +1,84 @@
+<div class="orders-page-container">
+<!-- Header negro con logo y navegación -->
+<div class="home-header">
+  <div class="header-left">
+    <div class="logo" (click)="goToCatalog()">
+      <div class="logo-symbol">
+        <div class="hk-logo">HK</div>
+      </div>
+      <span>HRK</span>
+    </div>
+    <nav class="main-nav">
+      <a (click)="goToCatalog()" class="nav-item">SHOP</a>
+      <a (click)="goToCatalog()" class="nav-item sale">SALE</a>
+      <a (click)="goToInfo()" class="nav-item info">info</a>
+    </nav>
+  </div>
+  
+  <div class="header-right">
+           <button class="icon-btn cart-icon" title="Carrito" (click)="goToCart()">
+             🛒
+             <span *ngIf="cartItemCount > 0" class="cart-badge">{{ cartItemCount }}</span>
+           </button>
+    <button class="icon-btn search-icon" title="Buscar">
+      🔍
+    </button>
+    <button class="icon-btn history-btn active" title="Historial de Pedidos" (click)="goToHistory()">
+      📋
+    </button>
+    <button class="icon-btn user-icon" title="Perfil de Usuario" (click)="goToProfile()">
+      <img src="/images/user-icon.png" alt="Usuario" class="user-icon-img">
+    </button>
+    <button class="logout-btn" (click)="logout()" title="Cerrar Sesión">
+      Cerrar Sesión
+    </button>
+  </div>
+</div>
+
+<!-- Contenido principal -->
+<div class="orders-container">
+  <h1 class="page-title">HISTORIAL DE PEDIDOS</h1>
+  
+  <!-- Filtro de fecha -->
+  <div class="filter-section">
+    <label for="fecha" class="filter-label">Fecha:</label>
+    <input 
+      type="date" 
+      id="fecha" 
+      [(ngModel)]="filtroFecha" 
+      (change)="onFechaChange()"
+      class="date-input"
+    />
+  </div>
+  
+  <!-- Tabla de pedidos -->
+  <div class="orders-table">
+    <div class="table-header">
+      <div class="header-cell">FECHA</div>
+      <div class="header-cell">MONTO</div>
+      <div class="header-cell">ESTADO</div>
+      <div class="header-cell">TIPO</div>
+    </div>
+    
+    <div class="table-body">
+      <div *ngFor="let pedido of pedidosFiltrados" class="table-row">
+        <div class="table-cell">{{ formatearFecha(pedido.fecha) }}</div>
+        <div class="table-cell">{{ formatearMonto(pedido.montoTotal) }}</div>
+        <div class="table-cell">
+          <span [class]="getEstadoClass(pedido.estado)">{{ pedido.estado }}</span>
+        </div>
+        <div class="table-cell">
+          <button [class]="getTipoClass(pedido.tipo)">{{ pedido.tipo }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Botón de generar devolución -->
+  <div class="actions-section">
+    <button (click)="generarNotaDevolucion()" class="devolucion-btn">
+      Generar nota de devolución
+    </button>
+  </div>
+</div>
+</div>

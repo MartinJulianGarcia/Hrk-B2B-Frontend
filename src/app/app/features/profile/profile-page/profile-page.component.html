@@ -21,7 +21,7 @@
           </div>
         </div>
         <div class="user-details">
-          <h2 class="user-name">{{ user?.username || 'Usuario' }}</h2>
+          <h2 class="user-name">{{ user?.nombreRazonSocial || 'Usuario' }}</h2>
           <p class="user-email">{{ user?.email || 'email@ejemplo.com' }}</p>
         </div>
       </div>
@@ -44,7 +44,7 @@
       <h3 class="card-title">Información de la cuenta</h3>
       <div class="info-row">
         <span class="info-label">Usuario:</span>
-        <span class="info-value">{{ user?.username || 'N/A' }}</span>
+        <span class="info-value">{{ user?.nombreRazonSocial || 'N/A' }}</span>
       </div>
       <div class="info-row">
         <span class="info-label">Email:</span>
@@ -53,6 +53,19 @@
       <div class="info-row">
         <span class="info-label">Miembro desde:</span>
         <span class="info-value">{{ memberSince }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Rol actual:</span>
+        <span class="info-value">{{ user?.tipoUsuario || 'N/A' }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">CUIT:</span>
+        <span class="info-value">{{ user?.cuit || 'N/A' }}</span>
+      </div>
+      <div class="info-row">
+        <button class="btn btn-secondary" (click)="cambiarRol()">
+          Cambiar a {{ user?.tipoUsuario === 'CLIENTE' ? 'ADMIN' : 'CLIENTE' }}
+        </button>
       </div>
     </div>
   </div>

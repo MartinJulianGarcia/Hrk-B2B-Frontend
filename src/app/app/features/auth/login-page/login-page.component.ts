@@ -30,11 +30,8 @@ export class LoginPageComponent {
     this.authService.login(this.credentials).subscribe({
       next: (user) => {
         this.loading = false;
-        if (user.tipo === 'VENDEDOR') {
-          this.router.navigate(['/select-client']);
-        } else {
-          this.router.navigate(['/catalog']);
-        }
+        // Todos los usuarios van al catálogo después del login
+        this.router.navigate(['/catalog']);
       },
       error: (err) => {
         this.loading = false;

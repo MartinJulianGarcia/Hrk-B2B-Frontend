@@ -30,9 +30,8 @@ export class ProductListComponent implements OnInit {
     const currentUser = this.authService.getCurrentUser();
     const selectedClient = this.authService.getSelectedClient();
     
-    if (currentUser?.tipo === 'VENDEDOR' && selectedClient) {
-      this.clienteId = selectedClient.id;
-    } else if (currentUser?.tipo === 'CLIENTE') {
+    // Simplificado: siempre usar el ID del usuario actual
+    if (currentUser) {
       this.clienteId = currentUser.id;
     }
 

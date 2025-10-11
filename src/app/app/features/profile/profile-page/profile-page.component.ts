@@ -36,7 +36,13 @@ export class ProfilePageComponent implements OnInit {
   }
 
   getMemberSince(): string {
-    // Por ahora retornamos una fecha fija, pero esto debería venir del backend
+    if (this.user && this.user.fechaCreacion) {
+      const date = new Date(this.user.fechaCreacion);
+      const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      return `${months[date.getMonth()]} ${date.getFullYear()}`;
+    }
+    // Fallback si no hay fecha
     const currentDate = new Date();
     const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -58,7 +64,26 @@ export class ProfilePageComponent implements OnInit {
   }
 
   viewOrderHistory(): void {
-    // Por ahora redirige al catálogo, más adelante se puede crear una página de historial
-    alert('Historial de pedidos próximamente disponible');
+    this.router.navigate(['/orders-history']);
+  }
+
+  cambiarRol(): void {
+    if (!this.user) return;
+    
+    const nuevoRol = this.user.tipoUsuario === 'CLIENTE' ? 'ADMIN' : 'CLIENTE';
+    const confirmacion = confirm(`¿Estás seguro que quieres cambiar tu rol a ${nuevoRol}?`);
+    
+    if (confirmacion) {
+      this.authService.cambiarRol(this.user.id, nuevoRol).subscribe({
+        next: (usuarioActualizado) => {
+          this.user = usuarioActualizado;
+          alert(`Rol cambiado exitosamente a ${nuevoRol}`);
+        },
+        error: (error) => {
+          console.error('Error al cambiar rol:', error);
+          alert('Error al cambiar el rol. Inténtalo de nuevo.');
+        }
+      });
+    }
   }
 }

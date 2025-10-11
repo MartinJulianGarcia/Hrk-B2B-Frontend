@@ -18,6 +18,7 @@
     <div class="header-right">
       <button class="icon-btn cart-icon" title="Carrito" (click)="goToCart()">
         🛒
+        <span *ngIf="cartItemCount > 0" class="cart-badge">{{ cartItemCount }}</span>
       </button>
       <button class="icon-btn search-icon" title="Buscar">
         🔍

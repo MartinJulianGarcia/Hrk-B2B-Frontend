@@ -13,13 +13,10 @@ import { AuthService, RegisterRequest } from '../../../core/auth.service';
 })
 export class RegisterPageComponent {
   userData: RegisterRequest = {
-    nombre: '',
+    nombreRazonSocial: '',
+    cuit: '',
     email: '',
-    password: '',
-    tipo: 'CLIENTE',
-    telefono: '',
-    direccion: '',
-    cuit: undefined
+    password: ''
   };
   cuitFormatted = '';
   password2 = '';
@@ -77,9 +74,8 @@ export class RegisterPageComponent {
       this.cuitFormatted = '';
     }
     
-    // Convertir a número para enviar al backend (solo números)
-    const cuitNumbers = value.replace(/\D/g, '');
-    this.userData.cuit = cuitNumbers ? parseInt(cuitNumbers) : undefined;
+    // Guardar el CUIT formateado como string
+    this.userData.cuit = this.cuitFormatted;
   }
 
   onSubmit(): void {
@@ -104,11 +100,8 @@ export class RegisterPageComponent {
           password: this.userData.password
         }).subscribe({
           next: (loggedUser) => {
-            if (loggedUser.tipo === 'VENDEDOR') {
-              this.router.navigate(['/select-client']);
-            } else {
-              this.router.navigate(['/catalog']);
-            }
+            // Después del registro, siempre ir al catálogo ya que todos se registran como CLIENTE
+            this.router.navigate(['/catalog']);
           },
           error: (err) => {
             this.error = 'Usuario creado pero error al iniciar sesión';
@@ -134,13 +127,10 @@ export class RegisterPageComponent {
 
   clearForm(): void {
     this.userData = {
-      nombre: '',
+      nombreRazonSocial: '',
+      cuit: '',
       email: '',
-      password: '',
-      tipo: 'CLIENTE',
-      telefono: '',
-      direccion: '',
-      cuit: undefined
+      password: ''
     };
     this.cuitFormatted = '';
     this.password2 = '';

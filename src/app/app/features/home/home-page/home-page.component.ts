@@ -24,6 +24,7 @@ export class HomePageComponent implements OnInit {
   itemsPerView = 5; // Mostrar 5 elementos
   showNavigation = false; // Controla si mostrar botones de navegación
   selectedQuantities: { [key: string]: number } = {};
+  cartItemCount = 0; // Contador de items en el carrito
 
   constructor(
     private productsService: ProductsService,
@@ -34,6 +35,7 @@ export class HomePageComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadProducts();
+    this.updateCartCount();
   }
 
   loadProducts(): void {
@@ -182,7 +184,7 @@ export class HomePageComponent implements OnInit {
     // Obtener cliente ID
     const currentUser = this.authService.getCurrentUser();
     const selectedClient = this.authService.getSelectedClient();
-    const clienteId = currentUser?.tipo === 'VENDEDOR' && selectedClient ? selectedClient.id : currentUser?.id;
+    const clienteId = currentUser?.id; // Simplificado: siempre usar el ID del usuario actual
     
     if (!clienteId) return;
 
@@ -197,6 +199,8 @@ export class HomePageComponent implements OnInit {
             this.cartService.agregarItem(carritoId, variante.id, quantity).subscribe(() => {
               // Mostrar mensaje de éxito
               alert(`Se agregaron ${quantity} unidades al carrito`);
+              // Actualizar contador del carrito
+              this.updateCartCount();
             });
           }
         }
@@ -229,7 +233,10 @@ export class HomePageComponent implements OnInit {
   }
 
   goToHistory(): void {
-    // Por ahora redirige al catálogo, más adelante se puede crear una página de historial
-    this.router.navigate(['/catalog']);
+    this.router.navigate(['/orders-history']);
+  }
+
+  updateCartCount(): void {
+    this.cartItemCount = this.cartService.getCantidadItems();
   }
 }

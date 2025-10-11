@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/auth.service';
+import { CartService } from '../../../core/cart.service';
 
 @Component({
   selector: 'app-info-page',
@@ -10,12 +11,18 @@ import { AuthService } from '../../../core/auth.service';
   templateUrl: './info-page.component.html',
   styleUrls: ['./info-page.component.scss']
 })
-export class InfoPageComponent {
+export class InfoPageComponent implements OnInit {
+  cartItemCount = 0; // Contador de items en el carrito
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cartService: CartService
   ) {}
+
+  ngOnInit(): void {
+    this.updateCartCount();
+  }
 
   logout(): void {
     this.authService.logout();
@@ -46,7 +53,10 @@ export class InfoPageComponent {
   }
 
   goToHistory(): void {
-    // Por ahora redirige al catálogo, más adelante se puede crear una página de historial
-    this.router.navigate(['/catalog']);
+    this.router.navigate(['/orders-history']);
+  }
+
+  updateCartCount(): void {
+    this.cartItemCount = this.cartService.getCantidadItems();
   }
 }

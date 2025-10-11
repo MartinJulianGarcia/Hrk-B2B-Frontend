@@ -12,19 +12,19 @@
   <div class="register-card">
     <form (ngSubmit)="onSubmit()" #registerForm="ngForm">
       <div class="form-group">
-        <label for="nombre">Nombre de usuario/razon social:</label>
+        <label for="nombreRazonSocial">Nombre de usuario/razon social:</label>
         <input 
           type="text" 
-          id="nombre" 
-          name="nombre" 
-          [(ngModel)]="userData.nombre" 
+          id="nombreRazonSocial" 
+          name="nombreRazonSocial" 
+          [(ngModel)]="userData.nombreRazonSocial" 
           required 
           minlength="2"
-          #nombre="ngModel"
+          #nombreRazonSocial="ngModel"
           class="form-control"
           placeholder="Ingresa tu nombre de usuario"
         >
-        <div *ngIf="nombre.invalid && nombre.touched" class="error">
+        <div *ngIf="nombreRazonSocial.invalid && nombreRazonSocial.touched" class="error">
           Nombre es requerido (mínimo 2 caracteres)
         </div>
       </div>
