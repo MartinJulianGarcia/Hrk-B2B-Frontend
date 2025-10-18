@@ -17,6 +17,7 @@ export interface ProductFormData {
   stock: number | null;
   descripcion?: string;
   imagen?: File;
+  imagenBase64?: string; // Para almacenar la imagen convertida a base64
 }
 
 @Component({
@@ -146,11 +147,41 @@ export class AddProductPageComponent implements OnInit {
     console.log('🔵 [FRONTEND] Talles:', this.productData.talles);
     console.log('🔵 [FRONTEND] Precio:', this.productData.precio);
     console.log('🔵 [FRONTEND] Stock:', this.productData.stock);
+    console.log('🔵 [FRONTEND] ⭐ IMAGEN en formulario:', {
+      imagen: this.productData.imagen,
+      esFile: this.productData.imagen instanceof File,
+      nombre: this.productData.imagen?.name,
+      tamaño: this.productData.imagen?.size
+    });
+    
+    // Log adicional para debug - verificar todo el objeto productData
+    console.log('🔵 [FRONTEND] 📋 COMPLETE productData object:', {
+      ...this.productData,
+      imagenInfo: {
+        existe: !!this.productData.imagen,
+        tipo: typeof this.productData.imagen,
+        esFile: this.productData.imagen instanceof File,
+        nombre: this.productData.imagen?.name,
+        tamaño: this.productData.imagen?.size
+      }
+    });
     
     this.productsService.createProduct(this.productData).subscribe({
       next: (response) => {
         this.loading = false;
-        this.success = 'Producto creado exitosamente';
+        
+        // Verificar si había una imagen personalizada y si se procesó correctamente
+        if (this.productData.imagen && this.productData.imagen instanceof File) {
+          // Hay una imagen seleccionada, verificar si se subió correctamente
+          console.log('🔵 [FRONTEND] Verificando si la imagen se procesó correctamente...');
+          
+          // Por ahora, asumimos que si llegamos aquí, el producto se creó
+          // pero podríamos no tener la imagen personalizada
+          this.success = 'Producto creado exitosamente. Nota: Si seleccionaste una imagen personalizada y no se muestra, puede deberse a un problema temporal con el servidor de archivos.';
+        } else {
+          this.success = 'Producto creado exitosamente';
+        }
+        
         console.log('Producto creado:', response);
         
         // Limpiar formulario
@@ -170,6 +201,8 @@ export class AddProductPageComponent implements OnInit {
           errorMessage = 'Error 400: Datos inválidos. Revisa que todos los campos estén completos.';
         } else if (error.status === 500) {
           errorMessage = 'Error del servidor. Inténtalo más tarde.';
+        } else if (error.message && error.message.includes('HTML')) {
+          errorMessage = 'Error al subir la imagen personalizada. El producto se creará con imagen por defecto. Inténtalo de nuevo.';
         }
         
         this.error = errorMessage;
@@ -235,6 +268,9 @@ export class AddProductPageComponent implements OnInit {
     };
     this.categoriaTalleSeleccionada = 'letras'; // Mantener "Talles de Letras" por defecto
     this.formSubmitted = false; // Limpiar el estado de envío
+    // Limpiar también la imagen seleccionada
+    this.productData.imagen = undefined;
+    this.productData.imagenBase64 = undefined;
   }
 
   // Métodos para manejar selección múltiple
@@ -281,9 +317,33 @@ export class AddProductPageComponent implements OnInit {
   }
 
   onImageSelected(event: any): void {
+    console.log('🔵 [FRONTEND] onImageSelected ejecutado, archivos:', event.target.files);
     const file = event.target.files[0];
     if (file) {
+      console.log('🔵 [FRONTEND] ✅ Archivo seleccionado:', file.name, 'Tamaño:', file.size, 'Tipo:', file.type);
+      
+      // Validar tamaño del archivo (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.error = 'La imagen es demasiado grande. Tamaño máximo: 5MB';
+        return;
+      }
+
+      // Validar tipo de archivo
+      if (!file.type.startsWith('image/')) {
+        this.error = 'Por favor selecciona un archivo de imagen válido';
+        return;
+      }
+
       this.productData.imagen = file;
+      console.log('🔵 [FRONTEND] ✅ Imagen asignada a productData.imagen:', this.productData.imagen);
+      
+      // Convertir a base64 para enviar al backend
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.productData.imagenBase64 = e.target?.result as string;
+        console.log('🔵 [FRONTEND] Imagen convertida a base64, tamaño:', file.size, 'bytes');
+      };
+      reader.readAsDataURL(file);
     }
   }
 

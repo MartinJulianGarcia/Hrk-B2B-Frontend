@@ -184,10 +184,18 @@
             📷 Seleccionar Imagen
           </label>
           <div class="image-preview" *ngIf="productData.imagen">
-            <span class="file-name">{{ productData.imagen.name }}</span>
+            <div class="preview-container">
+              <img [src]="productData.imagenBase64" [alt]="productData.imagen.name" class="preview-image" *ngIf="productData.imagenBase64">
+              <span class="file-name">{{ productData.imagen.name }}</span>
+            </div>
           </div>
         </div>
         <small class="form-help">Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 5MB</small>
+        <div class="image-info" *ngIf="productData.imagen">
+          <small class="image-note">
+            ✅ Imagen seleccionada: {{ productData.imagen.name }}
+          </small>
+        </div>
       </div>
 
       <div class="form-row">

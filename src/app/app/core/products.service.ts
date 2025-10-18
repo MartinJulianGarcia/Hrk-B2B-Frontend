@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { tap, catchError } from 'rxjs/operators';
+import { tap, catchError, switchMap } from 'rxjs/operators';
 import { Categoria } from './categories.enum';
 
 export interface VarianteDTO {
@@ -31,25 +31,151 @@ export interface ProductoDTO {
 
 @Injectable({ providedIn: 'root' })
 export class ProductsService {
-  private readonly API_URL = 'http://localhost:8081/api';
+  // URL base para el backend - cambiar según el entorno
+  private readonly BASE_URL = 'http://localhost:8081';  // Desarrollo
+  // Para producción cambiar a: 'https://api.tuapp.com'
+  
+  private readonly API_URL = `${this.BASE_URL}/api`;
   
   constructor(private http: HttpClient) {}
+
+  // Helper para normalizar URLs de imágenes
+  private normalizeImageUrl(imageUrl: string): string {
+    console.log('🔍 [FRONTEND] Normalizando URL:', imageUrl);
+    
+    // Si la URL ya es completa, la devolvemos tal como está
+    if (imageUrl.startsWith('http')) {
+      console.log('🔍 [FRONTEND] URL completa detectada:', imageUrl);
+      return imageUrl;
+    }
+    
+    // Si es una imagen por defecto del frontend
+    if (imageUrl.startsWith('/images/categories/')) {
+      console.log('🔍 [FRONTEND] Imagen por defecto del frontend:', imageUrl);
+      return imageUrl;
+    }
+    
+    // Si es una imagen subida al backend, primero probar con proxy
+    if (imageUrl.startsWith('/uploads/') || imageUrl.startsWith('uploads/')) {
+      const normalizedUrl = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+      console.log('🔍 [FRONTEND] Imagen subida normalizada (proxy):', normalizedUrl);
+      // TEMPORAL: Si el proxy no funciona, usar URL directa
+      // const directUrl = `http://localhost:8081${normalizedUrl}`;
+      // console.log('🔍 [FRONTEND] Intentando URL directa como fallback:', directUrl);
+      return normalizedUrl;
+    }
+    
+    // Si es solo el nombre del archivo (sin path), construir la ruta completa
+    if (!imageUrl.includes('/') && imageUrl.length > 0 && !imageUrl.includes('.')) {
+      // Es probable que sea solo el filename sin extensión o path
+      const normalizedUrl = `/uploads/${imageUrl}`;
+      console.log('🔍 [FRONTEND] Solo nombre de archivo, construyendo ruta:', normalizedUrl);
+      return normalizedUrl;
+    }
+    
+    // Si tiene extensión pero no path, es probable que sea el filename directo del backend
+    if (!imageUrl.includes('/') && imageUrl.includes('.') && imageUrl.length > 0) {
+      const normalizedUrl = `/uploads/${imageUrl}`;
+      console.log('🔍 [FRONTEND] Filename directo del backend, usando proxy path:', normalizedUrl);
+      return normalizedUrl;
+    }
+    
+    // Por defecto, devolver tal como está
+    console.log('🔍 [FRONTEND] URL sin cambios:', imageUrl);
+    return imageUrl;
+  }
+
+  // Método para subir imagen
+  uploadImage(file: File): Observable<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // URL para subir imágenes - usar BASE_URL para consistencia
+    const uploadUrl = `${this.BASE_URL}/uploads`;
+    
+    console.log('🔵 [FRONTEND] Subiendo imagen:', file.name, 'Tamaño:', file.size);
+    console.log('🔵 [FRONTEND] URL de subida (directa al backend):', uploadUrl);
+    
+    return this.http.post<string>(uploadUrl, formData, {
+      headers: {
+        // No especificar Content-Type para que Angular lo maneje automáticamente con multipart/form-data
+      },
+      responseType: 'text' as 'json'
+    }).pipe(
+      tap(response => {
+        console.log('🔵 [FRONTEND] ✅ Respuesta recibida del servidor:');
+        console.log('🔵 [FRONTEND] Tipo:', typeof response);
+        console.log('🔵 [FRONTEND] Longitud:', response ? response.length : 0);
+        console.log('🔵 [FRONTEND] Primeros 100 caracteres:', response ? response.substring(0, 100) : 'null');
+        
+        // Verificar si la respuesta parece ser HTML (significa que algo está mal)
+        if (typeof response === 'string' && response.trim().startsWith('<!DOCTYPE')) {
+          console.error('🔴 [FRONTEND] ❌ La respuesta parece ser HTML en lugar del filename esperado');
+          console.error('🔴 [FRONTEND] Esto indica que el endpoint /uploads no está funcionando correctamente');
+          console.error('🔴 [FRONTEND] El proxy podría no estar redirigiendo correctamente a http://localhost:8081');
+          throw new Error('El servidor devolvió HTML en lugar del filename del archivo');
+        }
+        
+        // Verificar si es una respuesta válida (debería ser solo el filename)
+        if (typeof response === 'string' && response.length > 0 && !response.includes('<') && !response.includes('/>')) {
+          console.log('🔵 [FRONTEND] ✅ Respuesta válida recibida:', response);
+        } else {
+          console.error('🔴 [FRONTEND] ❌ Respuesta inválida:', response);
+          throw new Error('Respuesta del servidor no es válida');
+        }
+      }),
+      catchError(error => {
+        console.error('🔴 [FRONTEND] ❌ Error al subir imagen:');
+        console.error('🔴 [FRONTEND] Status:', error.status);
+        console.error('🔴 [FRONTEND] StatusText:', error.statusText);
+        console.error('🔴 [FRONTEND] URL:', error.url);
+        console.error('🔴 [FRONTEND] Error completo:', error);
+        
+        // Verificar si es un error de CORS o proxy
+        if (error.status === 0 || error.status === 404) {
+          console.error('🔴 [FRONTEND] Posible problema de proxy o CORS');
+          throw new Error('No se puede conectar con el servidor de archivos. Verificar configuración del proxy.');
+        }
+        
+        throw error;
+      })
+    );
+  }
   
   list(): Observable<ProductoDTO[]> {
     console.log('🔵 [FRONTEND] Obteniendo productos desde la API...');
     return this.http.get<ProductoDTO[]>(`${this.API_URL}/productos`).pipe(
-      tap(products => console.log('🔵 [FRONTEND] Productos recibidos:', products)),
+      tap(products => {
+        console.log('🔵 [FRONTEND] Productos recibidos:', products.length, 'productos');
+        
+        // Normalizar URLs de imágenes de todos los productos
+        products.forEach((product, index) => {
+          const originalUrl = product.imagenUrl;
+          product.imagenUrl = this.normalizeImageUrl(product.imagenUrl);
+          console.log(`🔵 [FRONTEND] Producto ${index + 1}: ${product.nombre}`);
+          console.log(`  - URL original: ${originalUrl}`);
+          console.log(`  - URL normalizada: ${product.imagenUrl}`);
+        });
+      }),
       catchError(error => {
         console.error('🔴 [FRONTEND] Error al obtener productos:', error);
         // Fallback a mock data si hay error
         console.log('🟡 [FRONTEND] Usando datos mock como fallback');
-        return this.getMockProducts();
+    return this.getMockProducts();
       })
     );
   }
 
   createProduct(productData: any): Observable<any> {
     console.log('🔵 [FRONTEND] Datos enviados:', productData);
+    console.log('🔵 [FRONTEND] 🔍 DETALLES DE LA IMAGEN RECIBIDA:', {
+      imagen: productData.imagen,
+      tipo: typeof productData.imagen,
+      esFile: productData.imagen instanceof File,
+      nombre: productData.imagen?.name,
+      tamaño: productData.imagen?.size,
+      constructor: productData.imagen?.constructor?.name
+    });
     
     // Validar que los campos requeridos no sean null o undefined
     if (!productData.tipo || !productData.categoria) {
@@ -60,21 +186,84 @@ export class ProductsService {
       throw new Error('Tipo y categoría son obligatorios');
     }
     
-    const request = {
+    // Preparar request básico
+    const requestBase: any = {
       nombre: productData.nombre,
-      tipo: productData.tipo, // Ya viene como string del formulario
-      categoria: productData.categoria, // Ya viene como string del formulario
+      tipo: productData.tipo,
+      categoria: productData.categoria,
       sku: productData.sku,
       colores: productData.colores || [],
       talles: productData.talles || [],
       precio: productData.precio,
       stock: productData.stock,
-      descripcion: productData.descripcion || '',
-      imagenUrl: productData.imagen ? 'uploaded-image-url' : null // TODO: Implementar subida real
+      descripcion: productData.descripcion || ''
     };
 
-    console.log('🔵 [FRONTEND] Request al backend:', request);
+    // Verificar si hay imagen
+    console.log('🔵 [FRONTEND] Verificando imagen:', {
+      imagen: productData.imagen,
+      esFile: productData.imagen instanceof File,
+      nombre: productData.imagen?.name
+    });
+
+    // Si hay imagen, subirla primero
+    if (productData.imagen && productData.imagen instanceof File) {
+      console.log('🔵 [FRONTEND] Subiendo imagen personalizada:', productData.imagen.name);
+      
+      return this.uploadImage(productData.imagen).pipe(
+        switchMap((imageUrl: string) => {
+          console.log('🔵 [FRONTEND] 🎉 ENTRANDO AL switchMap - Imagen subida exitosamente, URL:', imageUrl);
+          console.log('🔵 [FRONTEND] Tipo de imageUrl recibido:', typeof imageUrl);
+          console.log('🔵 [FRONTEND] Contenido completo de imageUrl:', JSON.stringify(imageUrl));
+          
+          // Verificar si la respuesta es HTML (significa que algo está mal)
+          if (typeof imageUrl === 'string' && (imageUrl.includes('<!DOCTYPE html>') || imageUrl.includes('<!DOCTYPE'))) {
+            console.error('🔴 [FRONTEND] ❌ El backend devolvió HTML en lugar del filename. El endpoint /uploads no funciona correctamente.');
+            console.error('🔴 [FRONTEND] Continuando sin imagen personalizada...');
+            // En lugar de throw, continuamos sin imagen personalizada
+            console.log('🟡 [FRONTEND] Creando producto sin imagen personalizada debido a error en upload');
+            return this.http.post(`${this.API_URL}/productos`, requestBase);
+          }
+          
+          // Normalizar la URL de la imagen
+          const normalizedUrl = this.normalizeImageUrl(imageUrl);
+          console.log('🔵 [FRONTEND] URL normalizada:', normalizedUrl);
+          
+          // Agregar URL de imagen al request
+          const request = { ...requestBase, imagenUrl: normalizedUrl };
+          console.log('🔵 [FRONTEND] 📤 Request CON imagen al backend:', request);
+          console.log('🔵 [FRONTEND] ✅ imagenUrl que se envía al backend:', request.imagenUrl);
+          
     return this.http.post(`${this.API_URL}/productos`, request);
+        }),
+        catchError(error => {
+          console.error('🔴 [FRONTEND] Error en subida de imagen:', error);
+          console.error('🔴 [FRONTEND] Detalles del error:', {
+            status: error.status,
+            statusText: error.statusText,
+            error: error.error,
+            message: error.message
+          });
+          
+          // Si falla la subida, crear producto sin imagen personalizada (fallback)
+          console.log('🟡 [FRONTEND] Fallback: creando producto sin imagen personalizada debido a error en upload');
+          console.log('🔵 [FRONTEND] Request sin imagen:', requestBase);
+          
+          // Mostrar mensaje específico al usuario sobre el problema de imagen
+          if (error.message && error.message.includes('HTML')) {
+            console.log('🟡 [FRONTEND] El problema es que el endpoint /uploads está devolviendo HTML en lugar de procesar el archivo');
+            console.log('🟡 [FRONTEND] Esto generalmente se debe a problemas de configuración del proxy o CORS en el backend');
+          }
+          
+          return this.http.post(`${this.API_URL}/productos`, requestBase);
+        })
+      );
+    } else {
+      // No hay imagen personalizada
+      console.log('🔵 [FRONTEND] No hay imagen personalizada, el backend usará imagen por defecto');
+      console.log('🔵 [FRONTEND] Request sin imagen:', requestBase);
+      return this.http.post(`${this.API_URL}/productos`, requestBase);
+    }
   }
 
   private getMockProducts(): Observable<ProductoDTO[]> {
