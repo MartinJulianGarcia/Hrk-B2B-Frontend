@@ -156,4 +156,9 @@ export class OrdersHistoryPageComponent implements OnInit {
   updateCartCount(): void {
     this.cartItemCount = this.cartService.getCantidadItems();
   }
+
+  verDetallePedido(pedidoId: number): void {
+    console.log('🔵 [ORDERS HISTORY] Navegando a detalle del pedido:', pedidoId);
+    this.router.navigate(['/order-detail', pedidoId]);
+  }
 }

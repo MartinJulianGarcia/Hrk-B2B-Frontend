@@ -74,14 +74,17 @@
     <!-- Tabla cuando hay pedidos -->
     <div *ngIf="pedidosFiltrados.length > 0" class="orders-table">
       <div class="table-header">
+        <div class="header-cell">ID</div>
         <div class="header-cell">FECHA</div>
         <div class="header-cell">MONTO</div>
         <div class="header-cell">ESTADO</div>
         <div class="header-cell">TIPO</div>
+        <div class="header-cell">ACCIÓN</div>
       </div>
       
       <div class="table-body">
         <div *ngFor="let pedido of pedidosFiltrados" class="table-row">
+          <div class="table-cell"><strong>#{{ pedido.id }}</strong></div>
           <div class="table-cell">{{ formatearFecha(pedido.fecha) }}</div>
           <div class="table-cell">{{ formatearMonto(pedido.montoTotal) }}</div>
           <div class="table-cell">
@@ -89,6 +92,11 @@
           </div>
           <div class="table-cell">
             <button [class]="getTipoClass(pedido.tipo)">{{ pedido.tipo }}</button>
+          </div>
+          <div class="table-cell">
+            <button class="view-btn" (click)="verDetallePedido(pedido.id)" title="Ver Detalle">
+              📋 Ver
+            </button>
           </div>
         </div>
       </div>

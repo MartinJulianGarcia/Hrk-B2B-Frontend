@@ -277,7 +277,7 @@ $dark-gray: #495057;
 
 .table-header {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: 100px 1fr 1fr 1fr 1fr 120px;
   background: $primary-color;
   color: $white;
   font-weight: bold;
@@ -298,7 +298,7 @@ $dark-gray: #495057;
 
 .table-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: 100px 1fr 1fr 1fr 1fr 120px;
   border-bottom: 1px solid $border-color;
   transition: background-color 0.2s;
 
@@ -353,6 +353,28 @@ $dark-gray: #495057;
   font-size: 12px;
   font-weight: 500;
   cursor: default;
+}
+
+// Botón de ver detalle
+.view-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: #0056b3;
+    transform: translateY(-1px);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
 }
 
 // Botón de devolución

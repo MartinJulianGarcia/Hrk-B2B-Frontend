@@ -25,6 +25,16 @@ export interface ItemPedido {
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
+  // Información de la variante del producto (viene del backend)
+  variante?: {
+    id: number;
+    sku: string;
+    color: string;
+    talle: string;
+    precio: number;
+    stockDisponible: number;
+  };
+  productoNombre?: string; // Nombre del producto si está disponible
 }
 
 export interface Pedido {
@@ -56,12 +66,29 @@ export interface PedidoResponseDTO {
   montoTotal?: number; // Mantener para compatibilidad
   estado: string;
   tipo?: TipoPedido;
-  items: {
+  items?: {
     id: number;
     varianteId: number;
     cantidad: number;
     precioUnitario: number;
     subtotal: number;
+  }[];
+  detalles?: {
+    id: number;
+    cantidad: number;
+    precioUnitario: number;
+    variante?: {
+      id: number;
+      sku: string;
+      color: string;
+      talle: string;
+      precio: number;
+      stockDisponible: number;
+      producto?: {
+        id: number;
+        nombre: string;
+      };
+    };
   }[];
 }
 
@@ -107,13 +134,22 @@ export class OrdersService {
       montoTotal: dto.total || dto.montoTotal || 0, // Backend devuelve 'total', frontend espera 'montoTotal'
       estado: estadoMapeado,
       tipo: dto.tipo || TipoPedido.PEDIDO,
-      items: (dto.items || []).map(item => ({
-        id: item.id,
-        productoId: 0, // No disponible en el DTO
-        varianteId: item.varianteId,
-        cantidad: item.cantidad,
-        precioUnitario: item.precioUnitario,
-        subtotal: item.subtotal
+      items: (dto.detalles || dto.items || []).map((detalle: any) => ({
+        id: detalle.id,
+        productoId: detalle.variante?.producto?.id || 0,
+        varianteId: detalle.variante?.id || detalle.varianteId || 0,
+        cantidad: detalle.cantidad,
+        precioUnitario: detalle.precioUnitario,
+        subtotal: detalle.precioUnitario * detalle.cantidad,
+        variante: detalle.variante ? {
+          id: detalle.variante.id,
+          sku: detalle.variante.sku,
+          color: detalle.variante.color,
+          talle: detalle.variante.talle,
+          precio: detalle.variante.precio,
+          stockDisponible: detalle.variante.stockDisponible
+        } : undefined,
+        productoNombre: detalle.variante?.producto?.nombre || `Producto ${detalle.variante?.sku || detalle.varianteId}`
       }))
     };
     
@@ -322,7 +358,21 @@ export class OrdersService {
           
           // Filtrar y limpiar objetos que puedan tener referencias circulares
           const cleanedPedidos = parsedResponse.map((dto: any) => {
-            // Crear una copia limpia del objeto sin referencias circulares
+            // Limpiar detalles para evitar referencias circulares pero mantener información de variantes
+            const detallesLimpios = dto.detalles ? dto.detalles.map((detalle: any) => ({
+              id: detalle.id,
+              cantidad: detalle.cantidad,
+              precioUnitario: detalle.precioUnitario,
+              variante: detalle.variante ? {
+                id: detalle.variante.id,
+                sku: detalle.variante.sku,
+                color: detalle.variante.color,
+                talle: detalle.variante.talle,
+                precio: detalle.variante.precio,
+                stockDisponible: detalle.variante.stockDisponible
+              } : null
+            })) : [];
+
             return {
               id: dto.id,
               fecha: dto.fecha,
@@ -330,6 +380,7 @@ export class OrdersService {
               tipo: dto.tipo,
               total: dto.total,
               clienteId: dto.clienteId,
+              detalles: detallesLimpios,
               usuario: dto.usuario ? {
                 id: dto.usuario.id,
                 nombreRazonSocial: dto.usuario.nombreRazonSocial
@@ -408,7 +459,45 @@ export class OrdersService {
     return of(nuevaDevolucion);
   }
 
-  // Actualizar estado de un pedido
+  // Actualizar estado de un pedido en el backend
+  cambiarEstadoPedido(pedidoId: number, nuevoEstado: EstadoPedido): Observable<PedidoResponseDTO> {
+    console.log('🔵 [ORDERS SERVICE] Cambiando estado del pedido', pedidoId, 'a:', nuevoEstado);
+    
+    if (nuevoEstado === EstadoPedido.ENTREGADO) {
+      // Usar endpoint confirmar para marcar como entregado
+      return this.http.post<PedidoResponseDTO>(`${this.API_URL}/pedidos/${pedidoId}/confirmar`, {}).pipe(
+        tap(response => {
+          console.log('🔵 [ORDERS SERVICE] Pedido confirmado:', response);
+        }),
+        catchError((error: HttpErrorResponse) => {
+          console.error('🔴 [ORDERS SERVICE] Error al confirmar pedido:', error);
+          throw error;
+        })
+      );
+    } else if (nuevoEstado === EstadoPedido.PENDIENTE) {
+      // Para cancelar, necesitaríamos un endpoint específico o usar el existente de cancelar
+      return this.http.post<PedidoResponseDTO>(`${this.API_URL}/pedidos/${pedidoId}/cancelar`, {}).pipe(
+        tap(response => {
+          console.log('🔵 [ORDERS SERVICE] Pedido cancelado:', response);
+        }),
+        catchError((error: HttpErrorResponse) => {
+          console.error('🔴 [ORDERS SERVICE] Error al cancelar pedido:', error);
+          throw error;
+        })
+      );
+    } else {
+      // Para otros estados, por ahora usar confirmar por defecto
+      console.log('🟡 [ORDERS SERVICE] Estado no específico, usando confirmar por defecto');
+      return this.http.post<PedidoResponseDTO>(`${this.API_URL}/pedidos/${pedidoId}/confirmar`, {}).pipe(
+        catchError((error: HttpErrorResponse) => {
+          console.error('🔴 [ORDERS SERVICE] Error al cambiar estado:', error);
+          throw error;
+        })
+      );
+    }
+  }
+
+  // Actualizar estado de un pedido (método local fallback)
   actualizarEstado(pedidoId: number, nuevoEstado: EstadoPedido): Observable<Pedido> {
     const pedido = this.pedidos.find(p => p.id === pedidoId);
     if (!pedido) {
