@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NgIf, NgFor, CurrencyPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { CartService, PedidoDTO, CarritoItemDTO } from '../../../core/cart.service';
 import { OrdersService } from '../../../core/orders.service';
@@ -8,7 +9,7 @@ import { AuthService } from '../../../core/auth.service';
 @Component({
   selector: 'app-cart-page',
   standalone: true,
-  imports: [NgIf, NgFor, CurrencyPipe, RouterLink],
+  imports: [NgIf, NgFor, CurrencyPipe, RouterLink, FormsModule],
   templateUrl: './cart-page.component.html',
   styleUrls: ['./cart-page.component.scss']
 })
@@ -19,6 +20,15 @@ export class CartPageComponent implements OnInit {
   totalCarrito = 0;
   cantidadItems = 0;
   cartItemCount = 0; // Contador de items en el carrito
+  
+  // Modal de método de pago
+  showPaymentModal = false;
+  selectedPaymentMethod: string = '';
+  paymentMethods = [
+    { value: 'efectivo', label: 'Efectivo' },
+    { value: 'transferencia', label: 'Transferencia' },
+    { value: 'cheque', label: 'Cheque' }
+  ];
 
   constructor(
     private cart: CartService, 
@@ -28,10 +38,8 @@ export class CartPageComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const id = localStorage.getItem('carritoId');
-      if (id) this.carritoId = Number(id);
-    }
+    // Obtener el carritoId del servicio (que ya maneja localStorage)
+    this.carritoId = this.cart.getCarritoId();
     this.loadCarritoItems();
     this.updateCartCount();
   }
@@ -82,25 +90,154 @@ export class CartPageComponent implements OnInit {
 
     // Obtener cliente ID
     const currentUser = this.authService.getCurrentUser();
-    const selectedClient = this.authService.getSelectedClient();
-    const clienteId = currentUser?.id; // Simplificado: siempre usar el ID del usuario actual
-    
-    if (!clienteId) {
+    if (!currentUser?.id) {
       alert('Error: No se pudo identificar al cliente');
       return;
     }
 
-    // Generar pedido
-    this.cart.generarPedido(clienteId).subscribe(pedidoId => {
-      alert(`Pedido generado exitosamente. Número de pedido: ${pedidoId}`);
-      this.loadCarritoItems(); // Recargar items (debería estar vacío ahora)
-      this.router.navigate(['/orders-history']);
-    }, error => {
-      alert('Error al generar el pedido: ' + error.message);
+    // Mostrar modal de método de pago
+    this.showPaymentModal = true;
+  }
+
+  // Confirmar pedido con método de pago seleccionado
+  confirmarPedidoConPago(): void {
+    if (!this.selectedPaymentMethod) {
+      alert('Por favor selecciona un método de pago');
+      return;
+    }
+
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser?.id) {
+      alert('Error: No se pudo identificar al cliente');
+      return;
+    }
+
+    console.log('🔵 [CART] Generando pedido con método de pago:', this.selectedPaymentMethod);
+
+    // Generar pedido real usando el servicio de pedidos
+    const items = this.carritoItems.map(item => ({
+      id: item.id,
+      productoId: 0, // Se obtiene del backend
+      varianteId: item.varianteId,
+      cantidad: item.cantidad,
+      precioUnitario: item.precioUnitario,
+      subtotal: item.subtotal
+    }));
+
+    // Guardar método de pago antes de limpiar
+    const metodoPagoLabel = this.getPaymentMethodLabel();
+    
+    this.orders.crearPedido(currentUser.id, items, this.selectedPaymentMethod).subscribe({
+      next: (pedido) => {
+        console.log('🔵 [CART] Pedido creado exitosamente:', pedido);
+        console.log('🔵 [CART] ID del pedido:', pedido.id, 'es positivo?', pedido.id > 0);
+        
+        // Solo limpiar carrito si el pedido fue creado realmente en el backend
+        // Los IDs negativos indican que es mock data por error del backend
+        if (pedido.id && pedido.id > 0) {
+          console.log('🔵 [CART] Procesando pedido REAL del backend');
+          // Limpiar carrito solo si se creó exitosamente en el backend
+          this.cart.limpiarCarrito();
+          this.loadCarritoItems();
+          this.updateCartCount();
+          
+          // Cerrar modal
+          this.showPaymentModal = false;
+          this.selectedPaymentMethod = '';
+          
+          alert(`✅ Pedido generado exitosamente en el sistema.\nNúmero de pedido: ${pedido.id}\nMétodo de pago: ${metodoPagoLabel}\nTotal: $${pedido.montoTotal.toLocaleString()}`);
+          
+          // Redirigir al historial
+          this.router.navigate(['/orders-history']);
+        } else {
+          // Si es mock data, mostrar mensaje diferente
+          console.log('🟡 [CART] Pedido creado con datos mock debido a error del backend');
+          console.log('🟡 [CART] ID negativo detectado, no limpiando carrito');
+          console.log('🟡 [CART] Mostrando alert al usuario...');
+          
+          // Usar setTimeout para asegurar que el alert se ejecute correctamente
+          setTimeout(() => {
+            alert('⚠️ Error del servidor al crear el pedido. Se utilizaron datos temporales. Por favor, inténtalo de nuevo más tarde.');
+          }, 100);
+          
+          // No limpiar carrito ni redirigir
+          this.showPaymentModal = false;
+          this.selectedPaymentMethod = '';
+        }
+      },
+      error: (error) => {
+        console.error('🔴 [CART] Error al generar pedido:', error);
+        
+        // No limpiar carrito en caso de error
+        let errorMessage = 'Error al generar el pedido.';
+        
+        if (error.status === 500) {
+          errorMessage = 'Error interno del servidor. Por favor, verifica que el backend esté funcionando correctamente y inténtalo de nuevo.';
+        } else if (error.status === 404) {
+          errorMessage = 'Endpoint no encontrado. Verifica la configuración del servidor.';
+        } else {
+          errorMessage = `Error al generar el pedido: ${error.message}`;
+        }
+        
+        alert(errorMessage);
+        
+        // Cerrar modal pero mantener carrito
+        this.showPaymentModal = false;
+        this.selectedPaymentMethod = '';
+      }
     });
+  }
+
+  // Cancelar modal de pago
+  cancelarPago(): void {
+    this.showPaymentModal = false;
+    this.selectedPaymentMethod = '';
+  }
+
+  // Obtener etiqueta del método de pago
+  private getPaymentMethodLabel(): string {
+    const method = this.paymentMethods.find(m => m.value === this.selectedPaymentMethod);
+    return method ? method.label : this.selectedPaymentMethod;
   }
 
   updateCartCount(): void {
     this.cartItemCount = this.cart.getCantidadItems();
+  }
+
+  // Eliminar item específico del carrito
+  eliminarItem(itemId: number): void {
+    if (confirm('¿Estás seguro de que quieres eliminar este producto del carrito?')) {
+      this.cart.removerItem(itemId);
+      this.loadCarritoItems(); // Recargar la lista
+      this.updateCartCount(); // Actualizar contador
+    }
+  }
+
+  // Actualizar cantidad de un item
+  actualizarCantidad(itemId: number, event: any): void {
+    const inputValue = event.target.value.trim();
+    
+    // Si el input está vacío, no hacer nada por ahora
+    if (inputValue === '') {
+      return;
+    }
+    
+    const nuevaCantidad = parseInt(inputValue, 10);
+    
+    // Validar que sea un número válido
+    if (isNaN(nuevaCantidad) || nuevaCantidad < 1) {
+      // Si no es válido, restaurar el valor anterior
+      event.target.value = this.carritoItems.find(item => item.id === itemId)?.cantidad || 1;
+      return;
+    }
+    
+    if (nuevaCantidad === 0) {
+      // Si la cantidad es 0, eliminar el item
+      this.eliminarItem(itemId);
+    } else {
+      this.cart.actualizarCantidad(itemId, nuevaCantidad);
+      this.loadCarritoItems(); // Recargar la lista para actualizar totales
+      this.updateCartCount(); // Actualizar contador
+    }
   }
 }

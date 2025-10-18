@@ -17,8 +17,10 @@ export class OrdersHistoryPageComponent implements OnInit {
   pedidos: Pedido[] = [];
   pedidosFiltrados: Pedido[] = [];
   filtroFecha: string = '';
-  clienteId: number = 1; // Por ahora hardcodeado, se puede obtener del AuthService
+  clienteId?: number;
   cartItemCount = 0; // Contador de items en el carrito
+  loading = false;
+  error?: string;
 
   constructor(
     private ordersService: OrdersService,
@@ -28,14 +30,45 @@ export class OrdersHistoryPageComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Obtener el clienteId del usuario actual
+    const currentUser = this.authService.getCurrentUser();
+    console.log('🔵 [ORDERS HISTORY] Usuario actual:', currentUser);
+    this.clienteId = currentUser?.id;
+    console.log('🔵 [ORDERS HISTORY] Cliente ID obtenido:', this.clienteId);
+
+    if (!this.clienteId) {
+      this.error = 'No se pudo identificar al cliente';
+      console.error('🔴 [ORDERS HISTORY] Error: No se pudo obtener cliente ID');
+      return;
+    }
+
     this.loadPedidos();
     this.updateCartCount();
   }
 
   loadPedidos(): void {
-    this.ordersService.getHistorialPorCliente(this.clienteId).subscribe(pedidos => {
-      this.pedidos = pedidos;
-      this.aplicarFiltro();
+    if (!this.clienteId) {
+      this.error = 'No se pudo identificar al cliente';
+      return;
+    }
+
+    this.loading = true;
+    this.error = undefined;
+
+    this.ordersService.getHistorialPorCliente(this.clienteId!).subscribe({
+      next: pedidos => {
+        this.pedidos = pedidos;
+        this.aplicarFiltro();
+        this.loading = false;
+        console.log('🔵 [ORDERS HISTORY] Pedidos cargados:', pedidos.length);
+      },
+      error: error => {
+        console.error('Error al cargar pedidos:', error);
+        this.error = 'Error al cargar el historial de pedidos';
+        this.loading = false;
+        this.pedidos = [];
+        this.pedidosFiltrados = [];
+      }
     });
   }
 
@@ -77,7 +110,9 @@ export class OrdersHistoryPageComponent implements OnInit {
   }
 
   formatearFecha(fecha: Date): string {
-    return fecha.toLocaleDateString('es-ES');
+    if (!fecha) return '';
+    const dateObj = fecha instanceof Date ? fecha : new Date(fecha);
+    return dateObj.toLocaleDateString('es-ES');
   }
 
   formatearMonto(monto: number): string {

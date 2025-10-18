@@ -57,9 +57,7 @@ export class ProductListComponent implements OnInit {
     
     this.cart.crear(this.clienteId).subscribe(id => {
       this.carritoId = id;
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem('carritoId', String(id));
-      }
+      // El servicio ya maneja localStorage, no necesitamos hacerlo aquí
     });
   }
 

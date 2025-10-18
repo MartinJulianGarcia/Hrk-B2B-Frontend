@@ -31,18 +31,72 @@ export class CartService {
   private base = '/api/carrito';
   private carritoItems: CarritoItemDTO[] = [];
   private carritoId?: number;
+  private readonly CART_STORAGE_KEY = 'cart_items';
+  private readonly CART_ID_STORAGE_KEY = 'carrito_id';
   
   constructor(
     private ordersService: OrdersService,
     private http: HttpClient
-  ) {}
+  ) {
+    this.loadCarritoFromStorage();
+  }
+
+  // Cargar carrito desde localStorage
+  private loadCarritoFromStorage(): void {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        // Cargar items del carrito
+        const savedItems = localStorage.getItem(this.CART_STORAGE_KEY);
+        if (savedItems) {
+          this.carritoItems = JSON.parse(savedItems);
+          console.log('🔵 [CART SERVICE] Carrito cargado desde localStorage:', this.carritoItems);
+        }
+
+        // Cargar ID del carrito
+        const savedCartId = localStorage.getItem(this.CART_ID_STORAGE_KEY);
+        if (savedCartId) {
+          this.carritoId = Number(savedCartId);
+          console.log('🔵 [CART SERVICE] CarritoId cargado desde localStorage:', this.carritoId);
+        }
+      } catch (error) {
+        console.error('Error al cargar carrito desde localStorage:', error);
+        this.carritoItems = [];
+      }
+    }
+  }
+
+  // Guardar carrito en localStorage
+  private saveCarritoToStorage(): void {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        localStorage.setItem(this.CART_STORAGE_KEY, JSON.stringify(this.carritoItems));
+        if (this.carritoId) {
+          localStorage.setItem(this.CART_ID_STORAGE_KEY, String(this.carritoId));
+        }
+        console.log('🔵 [CART SERVICE] Carrito guardado en localStorage:', this.carritoItems);
+      } catch (error) {
+        console.error('Error al guardar carrito en localStorage:', error);
+      }
+    }
+  }
 
   crear(clienteId: number): Observable<number> {
+    // Solo crear un nuevo carrito si no existe uno
+    if (this.carritoId) {
+      console.log('🔵 [CART SERVICE] Carrito ya existe:', this.carritoId);
+      return new Observable(observer => {
+        observer.next(this.carritoId!);
+        observer.complete();
+      });
+    }
+
     // Mock: simular creación de carrito
     return new Observable(observer => {
       setTimeout(() => {
         this.carritoId = Math.floor(Math.random() * 1000) + 1;
-        this.carritoItems = []; // Limpiar items
+        // No limpiar items existentes, mantener el carrito persistente
+        console.log('🔵 [CART SERVICE] Nuevo carrito creado:', this.carritoId);
+        this.saveCarritoToStorage();
         observer.next(this.carritoId);
         observer.complete();
       }, 300);
@@ -83,8 +137,10 @@ export class CartService {
             existingItem.cantidad += cantidad;
             existingItem.subtotal = existingItem.cantidad * existingItem.precioUnitario;
           } else {
+            // Generar ID único para el item
+            const newId = Math.max(0, ...this.carritoItems.map(item => item.id)) + 1;
             const newItem: CarritoItemDTO = {
-              id: this.carritoItems.length + 1,
+              id: newId,
               varianteId: varianteId,
               cantidad: cantidad,
               precioUnitario: varianteEncontrada.precio,
@@ -99,6 +155,9 @@ export class CartService {
           
           console.log(`Agregando ${cantidad} unidades de variante ${varianteId} al carrito ${carritoId}`);
           console.log('🔵 [CART SERVICE] Carrito actualizado:', this.carritoItems);
+          
+          // Guardar el carrito actualizado en localStorage
+          this.saveCarritoToStorage();
           
           observer.next();
           observer.complete();
@@ -152,6 +211,35 @@ export class CartService {
 
   limpiarCarrito(): void {
     this.carritoItems = [];
+    this.saveCarritoToStorage();
+    console.log('🔵 [CART SERVICE] Carrito limpiado y guardado');
+  }
+
+  // Remover item específico del carrito
+  removerItem(itemId: number): void {
+    this.carritoItems = this.carritoItems.filter(item => item.id !== itemId);
+    this.saveCarritoToStorage();
+    console.log('🔵 [CART SERVICE] Item removido del carrito:', itemId);
+  }
+
+  // Actualizar cantidad de un item
+  actualizarCantidad(itemId: number, nuevaCantidad: number): void {
+    const item = this.carritoItems.find(item => item.id === itemId);
+    if (item) {
+      if (nuevaCantidad <= 0) {
+        this.removerItem(itemId);
+      } else {
+        item.cantidad = nuevaCantidad;
+        item.subtotal = item.cantidad * item.precioUnitario;
+        this.saveCarritoToStorage();
+        console.log('🔵 [CART SERVICE] Cantidad actualizada para item:', itemId, 'Nueva cantidad:', nuevaCantidad);
+      }
+    }
+  }
+
+  // Obtener carrito ID (público para usar en componentes)
+  getCarritoId(): number | undefined {
+    return this.carritoId;
   }
 
   // Generar pedido desde el carrito

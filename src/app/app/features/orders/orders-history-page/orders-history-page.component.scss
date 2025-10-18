@@ -476,3 +476,70 @@ $dark-gray: #495057;
     border-top: 1px solid $border-color;
   }
 }
+
+// Estados de carga, error y vacío
+.loading-state,
+.error-state,
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: $white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin: 20px 0;
+}
+
+.loading-state p {
+  color: $medium-gray;
+  font-size: 16px;
+}
+
+.error-state p {
+  color: #dc3545;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.retry-btn {
+  background: #dc3545;
+  color: $white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.retry-btn:hover {
+  background: #c82333;
+}
+
+.empty-state h3 {
+  color: $primary-color;
+  margin-bottom: 15px;
+  font-size: 20px;
+}
+
+.empty-state p {
+  color: $medium-gray;
+  margin-bottom: 30px;
+  font-size: 16px;
+}
+
+.catalog-btn {
+  background: $secondary-color;
+  color: $white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.3s;
+}
+
+.catalog-btn:hover {
+  background: #5a6fd8;
+  transform: translateY(-2px);
+}

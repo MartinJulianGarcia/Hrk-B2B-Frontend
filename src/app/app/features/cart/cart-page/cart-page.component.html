@@ -52,11 +52,29 @@
           <p>SKU: {{ item.sku }}</p>
         </div>
         <div class="item-quantity">
-          <span>Cantidad: {{ item.cantidad }}</span>
+          <label for="cantidad-{{ item.id }}">Cantidad:</label>
+          <input 
+            type="number" 
+            id="cantidad-{{ item.id }}"
+            [value]="item.cantidad" 
+            min="1" 
+            max="999"
+            (input)="actualizarCantidad(item.id, $event)"
+            class="quantity-input"
+          />
         </div>
         <div class="item-price">
           <span class="unit-price">{{ item.precioUnitario | currency:'ARS' }} c/u</span>
           <span class="subtotal">{{ item.subtotal | currency:'ARS' }}</span>
+        </div>
+        <div class="item-actions">
+          <button 
+            (click)="eliminarItem(item.id)" 
+            class="btn-remove"
+            title="Eliminar del carrito"
+          >
+            ❌
+          </button>
         </div>
       </div>
     </div>
@@ -105,6 +123,45 @@
       Confirmar pedido
     </button>
   </div>
+  </div>
+
+  <!-- Modal de método de pago -->
+  <div *ngIf="showPaymentModal" class="modal-overlay" (click)="cancelarPago()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Seleccionar Método de Pago</h3>
+        <button class="modal-close" (click)="cancelarPago()">×</button>
+      </div>
+      
+      <div class="modal-body">
+        <p>Total a pagar: <strong>{{ totalCarrito | currency:'ARS' }}</strong></p>
+        
+        <div class="payment-methods">
+          <h4>Selecciona un método de pago:</h4>
+          
+          <div class="payment-option" *ngFor="let method of paymentMethods">
+            <input 
+              type="radio" 
+              [id]="'payment-' + method.value"
+              [value]="method.value" 
+              [(ngModel)]="selectedPaymentMethod"
+              name="paymentMethod"
+            />
+            <label [for]="'payment-' + method.value">{{ method.label }}</label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="cancelarPago()">Cancelar</button>
+        <button 
+          class="btn-confirm" 
+          (click)="confirmarPedidoConPago()"
+          [disabled]="!selectedPaymentMethod">
+          Confirmar Pedido
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 

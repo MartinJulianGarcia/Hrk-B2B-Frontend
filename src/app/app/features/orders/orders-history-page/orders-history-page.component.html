@@ -51,24 +51,45 @@
     />
   </div>
   
-  <!-- Tabla de pedidos -->
-  <div class="orders-table">
-    <div class="table-header">
-      <div class="header-cell">FECHA</div>
-      <div class="header-cell">MONTO</div>
-      <div class="header-cell">ESTADO</div>
-      <div class="header-cell">TIPO</div>
+  <!-- Estado de carga -->
+  <div *ngIf="loading" class="loading-state">
+    <p>Cargando historial de pedidos...</p>
+  </div>
+
+  <!-- Estado de error -->
+  <div *ngIf="error && !loading" class="error-state">
+    <p>{{ error }}</p>
+    <button (click)="loadPedidos()" class="retry-btn">Reintentar</button>
+  </div>
+
+  <!-- Tabla de pedidos o mensaje de vacío -->
+  <div *ngIf="!loading && !error">
+    <!-- Mensaje cuando no hay pedidos -->
+    <div *ngIf="pedidosFiltrados.length === 0" class="empty-state">
+      <h3>Aún no hay pedidos realizados por el cliente</h3>
+      <p>Cuando realices tu primer pedido, aparecerá aquí.</p>
+      <button (click)="goToCatalog()" class="catalog-btn">Ir al Catálogo</button>
     </div>
-    
-    <div class="table-body">
-      <div *ngFor="let pedido of pedidosFiltrados" class="table-row">
-        <div class="table-cell">{{ formatearFecha(pedido.fecha) }}</div>
-        <div class="table-cell">{{ formatearMonto(pedido.montoTotal) }}</div>
-        <div class="table-cell">
-          <span [class]="getEstadoClass(pedido.estado)">{{ pedido.estado }}</span>
-        </div>
-        <div class="table-cell">
-          <button [class]="getTipoClass(pedido.tipo)">{{ pedido.tipo }}</button>
+
+    <!-- Tabla cuando hay pedidos -->
+    <div *ngIf="pedidosFiltrados.length > 0" class="orders-table">
+      <div class="table-header">
+        <div class="header-cell">FECHA</div>
+        <div class="header-cell">MONTO</div>
+        <div class="header-cell">ESTADO</div>
+        <div class="header-cell">TIPO</div>
+      </div>
+      
+      <div class="table-body">
+        <div *ngFor="let pedido of pedidosFiltrados" class="table-row">
+          <div class="table-cell">{{ formatearFecha(pedido.fecha) }}</div>
+          <div class="table-cell">{{ formatearMonto(pedido.montoTotal) }}</div>
+          <div class="table-cell">
+            <span [class]="getEstadoClass(pedido.estado)">{{ pedido.estado }}</span>
+          </div>
+          <div class="table-cell">
+            <button [class]="getTipoClass(pedido.tipo)">{{ pedido.tipo }}</button>
+          </div>
         </div>
       </div>
     </div>
