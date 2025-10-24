@@ -24,6 +24,11 @@ export interface PedidoDTO {
   estado: 'BORRADOR'|'DOCUMENTADO'|'CONFIRMADO'|'ABONADO'|'ENVIADO'|'ENTREGADO'|'CANCELADO';
   total: number;
   detalles: PedidoDetalleDTO[];
+  usuario?: {
+    id: number;
+    nombreRazonSocial: string;
+    email?: string;
+  };
 }
 
 @Injectable({ providedIn: 'root' })

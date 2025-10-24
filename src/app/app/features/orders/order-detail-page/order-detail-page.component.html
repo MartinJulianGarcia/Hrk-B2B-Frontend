@@ -71,7 +71,7 @@
         </div>
         <div class="info-item">
           <label>Cliente ID:</label>
-          <span>{{ pedido.clienteId }}</span>
+          <span>{{ pedido.clienteId }} - {{ pedido.usuario?.nombreRazonSocial || 'SIN NOMBRE' }}</span>
         </div>
         <div class="info-item">
           <label>Total:</label>

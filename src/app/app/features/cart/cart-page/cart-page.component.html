@@ -4,7 +4,7 @@
     <div class="header-left">
       <div class="logo" (click)="goToCatalog()">
         <div class="logo-symbol">
-          <div class="hk-logo">HK</div>
+          <img src="/HIRKUM-MONOGRAMA-B.jpg" alt="HIRKUM Logo" class="logo-image">
         </div>
         <span>HRK</span>
       </div>
@@ -73,7 +73,7 @@
             class="btn-remove"
             title="Eliminar del carrito"
           >
-            ❌
+            🗑️
           </button>
         </div>
       </div>
@@ -104,6 +104,23 @@
   <!-- Pedido generado -->
   <div *ngIf="pedido as ped" class="pedido-section">
     <h3>Pedido #{{ ped.id }} ({{ ped.estado }})</h3>
+    
+    <!-- Información del usuario -->
+    <div *ngIf="ped.usuario" class="usuario-info">
+      <h4>Información del Cliente</h4>
+      <div class="usuario-details">
+        <div class="usuario-item">
+          <strong>Nombre:</strong> {{ ped.usuario.nombreRazonSocial }}
+        </div>
+        <div *ngIf="ped.usuario.email" class="usuario-item">
+          <strong>Email:</strong> {{ ped.usuario.email }}
+        </div>
+        <div class="usuario-item">
+          <strong>ID Cliente:</strong> {{ ped.clienteId }}
+        </div>
+      </div>
+    </div>
+    
     <table class="pedido-table">
       <thead>
         <tr><th>Variante</th><th>Cant</th><th>P.Unit</th></tr>

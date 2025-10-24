@@ -47,6 +47,56 @@ $light-gray: #f8f9fa;
   }
 }
 
+.logo-symbol {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.hk-logo {
+  color: white;
+  font-weight: bold;
+  font-size: 12px;
+  font-family: Arial, sans-serif;
+  letter-spacing: 1px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hk-logo::before {
+  content: '';
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border: 2px solid white;
+  border-radius: 50%;
+  border-top-color: transparent;
+  transform: rotate(-15deg);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-15deg);
+}
+
+.hk-logo::after {
+  content: '';
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border: 2px solid white;
+  border-radius: 50%;
+  border-bottom-color: transparent;
+  transform: rotate(-15deg);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-15deg);
+}
+
 .main-nav {
   display: flex;
   align-items: center;
@@ -57,23 +107,32 @@ $light-gray: #f8f9fa;
 .nav-item {
   color: white;
   text-decoration: none;
-  font-size: 16px;
   font-weight: 500;
+  font-size: 14px;
+  text-transform: uppercase;
+  transition: opacity 0.3s;
   cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 6px;
-  transition: all 0.3s;
   
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    opacity: 0.7;
+  }
+  
+  &.sale {
+    color: #ff4444;
+    font-weight: 600;
+  }
+  
+  &.info {
+    font-style: italic;
+    text-transform: lowercase;
+    font-weight: 400;
   }
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 15px;
-  flex-wrap: wrap;
+  gap: 20px;
 }
 
 .icon-btn {
@@ -84,27 +143,75 @@ $light-gray: #f8f9fa;
   cursor: pointer;
   padding: 8px;
   border-radius: 4px;
-  transition: background 0.3s;
+  transition: background-color 0.3s;
   position: relative;
   
   &:hover {
     background: rgba(255, 255, 255, 0.1);
   }
+  
+  &.active {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+.icon-btn.user-icon {
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer;
+  padding: 0 !important;
+  border-radius: 6px;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+}
+
+.user-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+}
+
+.user-icon-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  display: block;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ff4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  min-width: 20px;
+  border: 2px solid black;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .logout-btn {
-  background: none;
-  border: 1px solid white;
+  background: rgba(255, 255, 255, 0.1);
   color: white;
-  padding: 8px 16px;
-  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 12px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
   transition: all 0.3s;
 
   &:hover {
-    background: white;
-    color: black;
+    background: rgba(255, 255, 255, 0.2);
   }
 }
 
@@ -135,11 +242,42 @@ $light-gray: #f8f9fa;
   gap: 20px;
 }
 
-.order-info-card, .status-change-card, .items-card {
+.order-info-card, .status-change-card, .items-card, .user-info-card {
   background: white;
   border-radius: 8px;
   padding: 24px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.user-info-card {
+  border-left: 4px solid #667eea;
+  
+  h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 18px;
+    font-weight: 600;
+  }
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #555;
+  
+  label {
+    color: #333;
+    font-weight: 600;
+    min-width: 80px;
+  }
 }
 
 .info-header {

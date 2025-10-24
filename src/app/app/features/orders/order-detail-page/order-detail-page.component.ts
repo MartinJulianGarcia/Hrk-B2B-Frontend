@@ -76,6 +76,7 @@ export class OrderDetailPageComponent implements OnInit {
         } else {
           this.nuevoEstado = this.pedido.estado;
           console.log('🔵 [ORDER DETAIL] Pedido encontrado:', this.pedido);
+          console.log('🔵 [ORDER DETAIL] Usuario del pedido:', this.pedido.usuario);
         }
         this.loading = false;
       },

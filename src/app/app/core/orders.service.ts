@@ -45,6 +45,11 @@ export interface Pedido {
   estado: EstadoPedido;
   tipo: TipoPedido;
   items: ItemPedido[];
+  usuario?: {
+    id: number;
+    nombreRazonSocial: string;
+    email?: string;
+  };
   tipoDevolucion?: TipoDevolucion; // Solo para devoluciones
 }
 
@@ -66,6 +71,11 @@ export interface PedidoResponseDTO {
   montoTotal?: number; // Mantener para compatibilidad
   estado: string;
   tipo?: TipoPedido;
+  usuario?: {
+    id: number;
+    nombreRazonSocial: string;
+    email?: string;
+  };
   items?: {
     id: number;
     varianteId: number;
@@ -107,6 +117,7 @@ export class OrdersService {
   // Función para mapear PedidoResponseDTO a Pedido
   private mapToPedido(dto: PedidoResponseDTO): Pedido {
     console.log('🔵 [ORDERS SERVICE] Mapeando DTO:', dto);
+    console.log('🔵 [ORDERS SERVICE] Usuario en DTO:', dto.usuario);
     
     // Mapear estado de string a enum
     let estadoMapeado: EstadoPedido;
@@ -134,6 +145,7 @@ export class OrdersService {
       montoTotal: dto.total || dto.montoTotal || 0, // Backend devuelve 'total', frontend espera 'montoTotal'
       estado: estadoMapeado,
       tipo: dto.tipo || TipoPedido.PEDIDO,
+      usuario: dto.usuario, // ⭐ AGREGAR INFORMACIÓN DEL USUARIO
       items: (dto.detalles || dto.items || []).map((detalle: any) => ({
         id: detalle.id,
         productoId: detalle.variante?.producto?.id || 0,
@@ -154,6 +166,7 @@ export class OrdersService {
     };
     
     console.log('🔵 [ORDERS SERVICE] Pedido mapeado:', pedidoMapeado);
+    console.log('🔵 [ORDERS SERVICE] Usuario en pedido mapeado:', pedidoMapeado.usuario);
     return pedidoMapeado;
   }
 
@@ -220,11 +233,19 @@ export class OrdersService {
   }
 
   // Crear un nuevo pedido desde el carrito
-  crearPedido(clienteId: number, items: ItemPedido[], metodoPago?: string): Observable<Pedido> {
-    console.log('🔵 [ORDERS SERVICE] Creando pedido para cliente:', clienteId, 'items:', items, 'método de pago:', metodoPago);
+  crearPedido(clienteId: number, items: ItemPedido[], metodoPago?: string, usuarioInfo?: {nombreRazonSocial: string, email: string}): Observable<Pedido> {
+    console.log('🔵 [ORDERS SERVICE] Creando pedido para cliente:', clienteId, 'items:', items, 'método de pago:', metodoPago, 'usuario:', usuarioInfo);
 
-    // Paso 1: Crear pedido básico
-    return this.http.post<any>(`${this.API_URL}/pedidos/crear?clienteId=${clienteId}`, {}).pipe(
+    // Paso 1: Crear pedido básico con información del usuario
+    const requestBody = usuarioInfo ? {
+      clienteId: clienteId,
+      usuario: {
+        nombreRazonSocial: usuarioInfo.nombreRazonSocial,
+        email: usuarioInfo.email
+      }
+    } : { clienteId: clienteId };
+    
+    return this.http.post<any>(`${this.API_URL}/pedidos/crear`, requestBody).pipe(
       switchMap((pedidoCreado: any) => {
         console.log('🔵 [ORDERS SERVICE] Pedido básico creado:', pedidoCreado);
         

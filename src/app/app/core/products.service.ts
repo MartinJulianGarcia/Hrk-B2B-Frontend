@@ -55,29 +55,37 @@ export class ProductsService {
       return imageUrl;
     }
     
-    // Si es una imagen subida al backend, primero probar con proxy
+    // Si es solo el nombre de la categoría (ej: "ruana", "GORRO"), construir la ruta completa
+    if (!imageUrl.includes('/') && !imageUrl.includes('.')) {
+      const categoryImageUrl = `/images/categories/${imageUrl.toLowerCase()}.jpg`;
+      console.log('🔍 [FRONTEND] Categoría detectada, construyendo ruta:', categoryImageUrl);
+      console.log('🔍 [FRONTEND] URL original:', imageUrl, '→ URL construida:', categoryImageUrl);
+      return categoryImageUrl;
+    }
+    
+    // Si es una imagen subida al backend, usar URL directa al backend
     if (imageUrl.startsWith('/uploads/') || imageUrl.startsWith('uploads/')) {
       const normalizedUrl = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-      console.log('🔍 [FRONTEND] Imagen subida normalizada (proxy):', normalizedUrl);
-      // TEMPORAL: Si el proxy no funciona, usar URL directa
-      // const directUrl = `http://localhost:8081${normalizedUrl}`;
-      // console.log('🔍 [FRONTEND] Intentando URL directa como fallback:', directUrl);
-      return normalizedUrl;
+      const directUrl = `http://localhost:8081${normalizedUrl}`;
+      console.log('🔍 [FRONTEND] Imagen subida, usando URL directa al backend:', directUrl);
+      return directUrl;
     }
     
     // Si es solo el nombre del archivo (sin path), construir la ruta completa
     if (!imageUrl.includes('/') && imageUrl.length > 0 && !imageUrl.includes('.')) {
       // Es probable que sea solo el filename sin extensión o path
       const normalizedUrl = `/uploads/${imageUrl}`;
-      console.log('🔍 [FRONTEND] Solo nombre de archivo, construyendo ruta:', normalizedUrl);
-      return normalizedUrl;
+      const directUrl = `http://localhost:8081${normalizedUrl}`;
+      console.log('🔍 [FRONTEND] Solo nombre de archivo, construyendo ruta directa:', directUrl);
+      return directUrl;
     }
     
     // Si tiene extensión pero no path, es probable que sea el filename directo del backend
     if (!imageUrl.includes('/') && imageUrl.includes('.') && imageUrl.length > 0) {
       const normalizedUrl = `/uploads/${imageUrl}`;
-      console.log('🔍 [FRONTEND] Filename directo del backend, usando proxy path:', normalizedUrl);
-      return normalizedUrl;
+      const directUrl = `http://localhost:8081${normalizedUrl}`;
+      console.log('🔍 [FRONTEND] Filename directo del backend, usando URL directa:', directUrl);
+      return directUrl;
     }
     
     // Por defecto, devolver tal como está
@@ -90,11 +98,11 @@ export class ProductsService {
     const formData = new FormData();
     formData.append('file', file);
     
-    // URL para subir imágenes - usar BASE_URL para consistencia
-    const uploadUrl = `${this.BASE_URL}/uploads`;
+    // URL para subir imágenes - usar URL directa temporalmente
+    const uploadUrl = 'http://localhost:8081/uploads';
     
     console.log('🔵 [FRONTEND] Subiendo imagen:', file.name, 'Tamaño:', file.size);
-    console.log('🔵 [FRONTEND] URL de subida (directa al backend):', uploadUrl);
+    console.log('🔵 [FRONTEND] URL de subida (URL directa):', uploadUrl);
     
     return this.http.post<string>(uploadUrl, formData, {
       headers: {
@@ -216,14 +224,18 @@ export class ProductsService {
           console.log('🔵 [FRONTEND] Tipo de imageUrl recibido:', typeof imageUrl);
           console.log('🔵 [FRONTEND] Contenido completo de imageUrl:', JSON.stringify(imageUrl));
           
-          // Verificar si la respuesta es HTML (significa que algo está mal)
-          if (typeof imageUrl === 'string' && (imageUrl.includes('<!DOCTYPE html>') || imageUrl.includes('<!DOCTYPE'))) {
-            console.error('🔴 [FRONTEND] ❌ El backend devolvió HTML en lugar del filename. El endpoint /uploads no funciona correctamente.');
-            console.error('🔴 [FRONTEND] Continuando sin imagen personalizada...');
-            // En lugar de throw, continuamos sin imagen personalizada
-            console.log('🟡 [FRONTEND] Creando producto sin imagen personalizada debido a error en upload');
-            return this.http.post(`${this.API_URL}/productos`, requestBase);
-          }
+        // Verificar si la respuesta es HTML (significa que algo está mal)
+        if (typeof imageUrl === 'string' && (imageUrl.includes('<!DOCTYPE html>') || imageUrl.includes('<!DOCTYPE'))) {
+          console.error('🔴 [FRONTEND] ❌ El backend devolvió HTML en lugar del filename. El endpoint /uploads no funciona correctamente.');
+          console.error('🔴 [FRONTEND] Esto puede deberse a:');
+          console.error('🔴 [FRONTEND] 1. El backend no está ejecutándose en localhost:8081');
+          console.error('🔴 [FRONTEND] 2. El endpoint /uploads no está configurado correctamente');
+          console.error('🔴 [FRONTEND] 3. Problema de CORS o proxy');
+          console.error('🔴 [FRONTEND] Continuando sin imagen personalizada...');
+          // En lugar de throw, continuamos sin imagen personalizada
+          console.log('🟡 [FRONTEND] Creando producto sin imagen personalizada debido a error en upload');
+          return this.http.post(`${this.API_URL}/productos`, requestBase);
+        }
           
           // Normalizar la URL de la imagen
           const normalizedUrl = this.normalizeImageUrl(imageUrl);

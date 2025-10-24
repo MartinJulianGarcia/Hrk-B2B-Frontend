@@ -127,7 +127,13 @@ export class CartPageComponent implements OnInit {
     // Guardar método de pago antes de limpiar
     const metodoPagoLabel = this.getPaymentMethodLabel();
     
-    this.orders.crearPedido(currentUser.id, items, this.selectedPaymentMethod).subscribe({
+    // Preparar información del usuario para enviar al backend
+    const usuarioInfo = {
+      nombreRazonSocial: currentUser.nombreRazonSocial,
+      email: currentUser.email
+    };
+    
+    this.orders.crearPedido(currentUser.id, items, this.selectedPaymentMethod, usuarioInfo).subscribe({
       next: (pedido) => {
         console.log('🔵 [CART] Pedido creado exitosamente:', pedido);
         console.log('🔵 [CART] ID del pedido:', pedido.id, 'es positivo?', pedido.id > 0);
