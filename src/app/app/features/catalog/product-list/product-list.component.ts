@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { NgFor, NgIf, JsonPipe } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ProductsService, ProductoDTO } from '../../../core/products.service';
 import { CartService } from '../../../core/cart.service';
 import { AuthService } from '../../../core/auth.service';
@@ -9,7 +10,7 @@ import { RouterLink, Router } from '@angular/router';
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [NgFor, NgIf, ProductGridComponent, RouterLink, JsonPipe],
+  imports: [NgFor, NgIf, ProductGridComponent, RouterLink, FormsModule],
   templateUrl: './product-list.component.html',
   styleUrls: ['./product-list.component.scss']
 })
@@ -19,6 +20,9 @@ export class ProductListComponent implements OnInit {
   carritoId?: number;
   loading = false; error?: string;
   selectedFilter: 'tejido' | 'plano' | 'all' = 'all';
+  showSearchModal = false; // Controla si mostrar el modal de búsqueda
+  searchTerm = ''; // Término de búsqueda
+  searchResults: any[] = []; // Resultados de la búsqueda
 
   constructor(
     private products: ProductsService, 
@@ -104,5 +108,136 @@ export class ProductListComponent implements OnInit {
 
   goToAddProduct(): void {
     this.router.navigate(['/add-product']);
+  }
+
+  // Métodos de búsqueda
+  openSearchModal(): void {
+    this.showSearchModal = true;
+    this.searchTerm = '';
+    this.searchResults = [];
+  }
+
+  closeSearchModal(): void {
+    this.showSearchModal = false;
+    this.searchTerm = '';
+    this.searchResults = [];
+  }
+
+  performSearch(): void {
+    if (!this.searchTerm.trim()) {
+      this.searchResults = [];
+      return;
+    }
+
+    const term = this.searchTerm.toLowerCase().trim();
+    this.searchResults = [];
+
+    // Buscar en TODOS los productos (no solo filtrados)
+    this.productos.forEach(producto => {
+      if (producto.nombre.toLowerCase().includes(term) ||
+          producto.descripcion?.toLowerCase().includes(term) ||
+          producto.categoria.toLowerCase().includes(term)) {
+        
+        // Determinar si el producto está en el filtro actual
+        const productosActuales = this.selectedFilter === 'all' 
+          ? this.productos 
+          : this.productos.filter(p => {
+              if (this.selectedFilter === 'tejido') {
+                return p.categoria.toLowerCase().includes('tejido');
+              } else if (this.selectedFilter === 'plano') {
+                return p.categoria.toLowerCase().includes('plano');
+              }
+              return true;
+            });
+        
+        const isInCurrentFilter = productosActuales.includes(producto);
+        
+        if (!isInCurrentFilter) {
+          // Determinar el filtro correcto para este producto
+          let correctFilter: 'tejido' | 'plano' | 'all' = 'all';
+          if (producto.categoria.toLowerCase().includes('tejido')) {
+            correctFilter = 'tejido';
+          } else if (producto.categoria.toLowerCase().includes('plano')) {
+            correctFilter = 'plano';
+          }
+
+          this.searchResults.push({
+            type: 'producto',
+            title: producto.nombre,
+            description: `${producto.descripcion || 'Sin descripción'} (En filtro: ${correctFilter.toUpperCase()})`,
+            data: producto,
+            requiresFilterChange: true,
+            correctFilter: correctFilter
+          });
+        } else {
+          // Producto está en el filtro actual
+          this.searchResults.push({
+            type: 'producto',
+            title: producto.nombre,
+            description: producto.descripcion || 'Sin descripción',
+            data: producto,
+            requiresFilterChange: false
+          });
+        }
+      }
+    });
+
+    // Buscar en elementos de la página (títulos, botones, etc.)
+    const pageElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6, button, a, span, p');
+    pageElements.forEach(element => {
+      const text = element.textContent?.toLowerCase() || '';
+      if (text.includes(term) && text.length > 0) {
+        this.searchResults.push({
+          type: 'elemento',
+          title: element.textContent?.trim() || '',
+          description: `Elemento encontrado en la página`,
+          element: element
+        });
+      }
+    });
+  }
+
+  scrollToResult(result: any): void {
+    // Cerrar el modal de búsqueda automáticamente
+    this.closeSearchModal();
+    
+    if (result.type === 'producto') {
+      // Si requiere cambio de filtro, cambiarlo primero
+      if (result.requiresFilterChange && result.correctFilter) {
+        this.setFilter(result.correctFilter);
+        
+        // Esperar a que se carguen los productos con el nuevo filtro
+        setTimeout(() => {
+          const productElement = document.querySelector(`[data-product-id="${result.data.id}"]`);
+          if (productElement) {
+            productElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Resaltar el elemento
+            productElement.classList.add('search-highlight');
+            setTimeout(() => {
+              productElement.classList.remove('search-highlight');
+            }, 2000);
+          }
+        }, 500); // Dar tiempo para que se actualice la vista
+      } else {
+        // Scroll al producto en la página (filtro actual)
+        const productElement = document.querySelector(`[data-product-id="${result.data.id}"]`);
+        if (productElement) {
+          productElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Resaltar el elemento
+          productElement.classList.add('search-highlight');
+          setTimeout(() => {
+            productElement.classList.remove('search-highlight');
+          }, 2000);
+        }
+      }
+    } else if (result.element) {
+      // Scroll al elemento de la página
+      result.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Resaltar el elemento
+      result.element.classList.add('search-highlight');
+      setTimeout(() => {
+        result.element.classList.remove('search-highlight');
+      }, 2000);
+    }
   }
 }

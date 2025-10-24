@@ -44,6 +44,7 @@ export interface Pedido {
   montoTotal: number;
   estado: EstadoPedido;
   tipo: TipoPedido;
+  metodoPago?: string; // ⭐ AGREGAR MÉTODO DE PAGO
   items: ItemPedido[];
   usuario?: {
     id: number;
@@ -56,6 +57,7 @@ export interface Pedido {
 // Interfaces para comunicación con el backend
 export interface CreatePedidoRequest {
   clienteId: number;
+  metodoPago?: string; // ⭐ AGREGAR MÉTODO DE PAGO
   items: {
     varianteId: number;
     cantidad: number;
@@ -71,6 +73,7 @@ export interface PedidoResponseDTO {
   montoTotal?: number; // Mantener para compatibilidad
   estado: string;
   tipo?: TipoPedido;
+  metodoPago?: string; // ⭐ AGREGAR MÉTODO DE PAGO
   usuario?: {
     id: number;
     nombreRazonSocial: string;
@@ -118,6 +121,7 @@ export class OrdersService {
   private mapToPedido(dto: PedidoResponseDTO): Pedido {
     console.log('🔵 [ORDERS SERVICE] Mapeando DTO:', dto);
     console.log('🔵 [ORDERS SERVICE] Usuario en DTO:', dto.usuario);
+    console.log('🔵 [ORDERS SERVICE] Método de pago en DTO:', dto.metodoPago);
     
     // Mapear estado de string a enum
     let estadoMapeado: EstadoPedido;
@@ -145,6 +149,7 @@ export class OrdersService {
       montoTotal: dto.total || dto.montoTotal || 0, // Backend devuelve 'total', frontend espera 'montoTotal'
       estado: estadoMapeado,
       tipo: dto.tipo || TipoPedido.PEDIDO,
+      metodoPago: dto.metodoPago, // ⭐ AGREGAR MÉTODO DE PAGO
       usuario: dto.usuario, // ⭐ AGREGAR INFORMACIÓN DEL USUARIO
       items: (dto.detalles || dto.items || []).map((detalle: any) => ({
         id: detalle.id,
@@ -167,6 +172,7 @@ export class OrdersService {
     
     console.log('🔵 [ORDERS SERVICE] Pedido mapeado:', pedidoMapeado);
     console.log('🔵 [ORDERS SERVICE] Usuario en pedido mapeado:', pedidoMapeado.usuario);
+    console.log('🔵 [ORDERS SERVICE] Método de pago en pedido mapeado:', pedidoMapeado.metodoPago);
     return pedidoMapeado;
   }
 
@@ -239,11 +245,17 @@ export class OrdersService {
     // Paso 1: Crear pedido básico con información del usuario
     const requestBody = usuarioInfo ? {
       clienteId: clienteId,
+      metodoPago: metodoPago, // ⭐ INCLUIR MÉTODO DE PAGO
       usuario: {
         nombreRazonSocial: usuarioInfo.nombreRazonSocial,
         email: usuarioInfo.email
       }
-    } : { clienteId: clienteId };
+    } : { 
+      clienteId: clienteId,
+      metodoPago: metodoPago // ⭐ INCLUIR MÉTODO DE PAGO
+    };
+    
+    console.log('🔵 [ORDERS SERVICE] Request body que se envía al backend:', requestBody);
     
     return this.http.post<any>(`${this.API_URL}/pedidos/crear`, requestBody).pipe(
       switchMap((pedidoCreado: any) => {
@@ -401,6 +413,7 @@ export class OrdersService {
               tipo: dto.tipo,
               total: dto.total,
               clienteId: dto.clienteId,
+              metodoPago: dto.metodoPago, // ⭐ AGREGAR MÉTODO DE PAGO
               detalles: detallesLimpios,
               usuario: dto.usuario ? {
                 id: dto.usuario.id,

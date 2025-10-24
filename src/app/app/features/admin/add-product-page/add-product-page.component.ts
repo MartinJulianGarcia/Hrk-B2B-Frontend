@@ -108,6 +108,11 @@ export class AddProductPageComponent implements OnInit {
   cartItemCount = 0;
   formSubmitted = false; // Control para mostrar errores solo después de intentar enviar
 
+  // Funcionalidad de búsqueda
+  showSearchModal = false;
+  searchTerm = '';
+  searchResults: any[] = [];
+
   constructor(
     private authService: AuthService,
     private cartService: CartService,
@@ -406,5 +411,66 @@ export class AddProductPageComponent implements OnInit {
 
   updateCartCount(): void {
     this.cartItemCount = this.cartService.getCantidadItems();
+  }
+
+  // Métodos de búsqueda
+  openSearchModal(): void {
+    this.showSearchModal = true;
+    this.searchTerm = '';
+    this.searchResults = [];
+  }
+
+  closeSearchModal(): void {
+    this.showSearchModal = false;
+    this.searchTerm = '';
+    this.searchResults = [];
+  }
+
+  performSearch(): void {
+    if (!this.searchTerm.trim()) {
+      this.searchResults = [];
+      return;
+    }
+
+    const term = this.searchTerm.toLowerCase().trim();
+    this.searchResults = [];
+
+    // Buscar en elementos de la página (títulos, botones, etc.)
+    const pageElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6, button, a, span, p, label, input, select, textarea');
+    pageElements.forEach(element => {
+      const text = element.textContent?.toLowerCase() || '';
+      const placeholder = element.getAttribute('placeholder')?.toLowerCase() || '';
+      const label = element.getAttribute('for')?.toLowerCase() || '';
+      
+      if (text.includes(term) || placeholder.includes(term) || label.includes(term)) {
+        // Determinar el tipo de elemento
+        let type = 'elemento';
+        if (element.tagName === 'LABEL' || element.tagName === 'INPUT' || element.tagName === 'SELECT' || element.tagName === 'TEXTAREA') {
+          type = 'campo';
+        }
+
+        this.searchResults.push({
+          type: type,
+          title: element.textContent?.trim() || element.getAttribute('placeholder') || element.getAttribute('for') || 'Elemento',
+          description: type === 'campo' ? 'Campo del formulario' : 'Elemento encontrado en la página',
+          element: element
+        });
+      }
+    });
+  }
+
+  scrollToResult(result: any): void {
+    // Cerrar el modal de búsqueda automáticamente
+    this.closeSearchModal();
+    
+    if (result.element) {
+      // Scroll al elemento de la página
+      result.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Resaltar el elemento
+      result.element.classList.add('search-highlight');
+      setTimeout(() => {
+        result.element.classList.remove('search-highlight');
+      }, 2000);
+    }
   }
 }

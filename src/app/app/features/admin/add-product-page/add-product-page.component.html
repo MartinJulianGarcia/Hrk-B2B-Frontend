@@ -20,7 +20,7 @@
         🛒
         <span *ngIf="cartItemCount > 0" class="cart-badge">{{ cartItemCount }}</span>
       </button>
-      <button class="icon-btn search-icon" title="Buscar">
+      <button class="icon-btn search-icon" title="Buscar" (click)="openSearchModal()">
         🔍
       </button>
       <button class="icon-btn history-btn" title="Historial de Pedidos" (click)="goToHistory()">
@@ -264,5 +264,39 @@
         ✅ {{ success }}
       </div>
     </form>
+  </div>
+
+  <!-- Modal de búsqueda -->
+  <div *ngIf="showSearchModal" class="search-modal-overlay" (click)="closeSearchModal()">
+    <div class="search-modal" (click)="$event.stopPropagation()">
+      <div class="search-header">
+        <h3>Buscar en la página</h3>
+        <button class="close-btn" (click)="closeSearchModal()">×</button>
+      </div>
+      <div class="search-input-container">
+        <input 
+          type="text" 
+          [(ngModel)]="searchTerm" 
+          (input)="performSearch()"
+          placeholder="Escribe lo que quieres buscar..."
+          class="search-input"
+          autofocus
+        >
+      </div>
+      <div class="search-results" *ngIf="searchResults.length > 0">
+        <div class="search-result-item" 
+             *ngFor="let result of searchResults" 
+             (click)="scrollToResult(result)">
+          <div class="result-type">{{ result.type === 'campo' ? '📝' : '📄' }}</div>
+          <div class="result-content">
+            <div class="result-title">{{ result.title }}</div>
+            <div class="result-description">{{ result.description }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="no-results" *ngIf="searchTerm && searchResults.length === 0">
+        <p>No se encontraron resultados para "{{ searchTerm }}"</p>
+      </div>
+    </div>
   </div>
 </div>

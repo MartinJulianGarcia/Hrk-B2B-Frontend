@@ -25,6 +25,9 @@ export class HomePageComponent implements OnInit {
   showNavigation = false; // Controla si mostrar botones de navegación
   selectedQuantities: { [key: string]: number } = {};
   cartItemCount = 0; // Contador de items en el carrito
+  showSearchModal = false; // Controla si mostrar el modal de búsqueda
+  searchTerm = ''; // Término de búsqueda
+  searchResults: any[] = []; // Resultados de la búsqueda
 
   constructor(
     private productsService: ProductsService,
@@ -367,5 +370,123 @@ export class HomePageComponent implements OnInit {
 
   updateCartCount(): void {
     this.cartItemCount = this.cartService.getCantidadItems();
+  }
+
+  // Métodos de búsqueda
+  openSearchModal(): void {
+    this.showSearchModal = true;
+    this.searchTerm = '';
+    this.searchResults = [];
+  }
+
+  closeSearchModal(): void {
+    this.showSearchModal = false;
+    this.searchTerm = '';
+    this.searchResults = [];
+  }
+
+  performSearch(): void {
+    if (!this.searchTerm.trim()) {
+      this.searchResults = [];
+      return;
+    }
+
+    const term = this.searchTerm.toLowerCase().trim();
+    this.searchResults = [];
+
+    // Buscar en TODOS los productos (no solo filtrados)
+    this.productos.forEach(producto => {
+      if (producto.nombre.toLowerCase().includes(term) ||
+          producto.descripcion?.toLowerCase().includes(term) ||
+          producto.categoria.toLowerCase().includes(term)) {
+        
+        // Determinar si el producto está en el filtro actual
+        const isInCurrentFilter = this.filteredProducts.includes(producto);
+        
+        if (!isInCurrentFilter) {
+          // Determinar el filtro correcto para este producto
+          let correctFilter: 'tejido' | 'plano' = 'tejido';
+          if (producto.categoria.toLowerCase().includes('plano')) {
+            correctFilter = 'plano';
+          }
+
+          this.searchResults.push({
+            type: 'producto',
+            title: producto.nombre,
+            description: `${producto.descripcion || 'Sin descripción'} (En filtro: ${correctFilter.toUpperCase()})`,
+            data: producto,
+            requiresFilterChange: true,
+            correctFilter: correctFilter
+          });
+        } else {
+          // Producto está en el filtro actual
+          this.searchResults.push({
+            type: 'producto',
+            title: producto.nombre,
+            description: producto.descripcion || 'Sin descripción',
+            data: producto,
+            requiresFilterChange: false
+          });
+        }
+      }
+    });
+
+    // Buscar en elementos de la página (títulos, botones, etc.)
+    const pageElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6, button, a, span, p');
+    pageElements.forEach(element => {
+      const text = element.textContent?.toLowerCase() || '';
+      if (text.includes(term) && text.length > 0) {
+        this.searchResults.push({
+          type: 'elemento',
+          title: element.textContent?.trim() || '',
+          description: `Elemento encontrado en la página`,
+          element: element
+        });
+      }
+    });
+  }
+
+  scrollToResult(result: any): void {
+    // Cerrar el modal de búsqueda automáticamente
+    this.closeSearchModal();
+    
+    if (result.type === 'producto') {
+      // Si requiere cambio de filtro, cambiarlo primero
+      if (result.requiresFilterChange && result.correctFilter) {
+        this.setFilter(result.correctFilter);
+        
+        // Esperar a que se carguen los productos con el nuevo filtro
+        setTimeout(() => {
+          const productElement = document.querySelector(`[data-product-id="${result.data.id}"]`);
+          if (productElement) {
+            productElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Resaltar el elemento
+            productElement.classList.add('search-highlight');
+            setTimeout(() => {
+              productElement.classList.remove('search-highlight');
+            }, 2000);
+          }
+        }, 500); // Dar tiempo para que se actualice la vista
+      } else {
+        // Scroll al producto en la página (filtro actual)
+        const productElement = document.querySelector(`[data-product-id="${result.data.id}"]`);
+        if (productElement) {
+          productElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Resaltar el elemento
+          productElement.classList.add('search-highlight');
+          setTimeout(() => {
+            productElement.classList.remove('search-highlight');
+          }, 2000);
+        }
+      }
+    } else if (result.element) {
+      // Scroll al elemento de la página
+      result.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Resaltar el elemento
+      result.element.classList.add('search-highlight');
+      setTimeout(() => {
+        result.element.classList.remove('search-highlight');
+      }, 2000);
+    }
   }
 }

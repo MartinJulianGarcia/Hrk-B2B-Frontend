@@ -29,6 +29,11 @@ export class OrderDetailPageComponent implements OnInit {
   nuevoEstado?: EstadoPedido;
   cambiandoEstado = false;
 
+  // Funcionalidad de búsqueda
+  showSearchModal = false;
+  searchTerm = '';
+  searchResults: any[] = [];
+
   constructor(
     private ordersService: OrdersService,
     private authService: AuthService,
@@ -77,6 +82,7 @@ export class OrderDetailPageComponent implements OnInit {
           this.nuevoEstado = this.pedido.estado;
           console.log('🔵 [ORDER DETAIL] Pedido encontrado:', this.pedido);
           console.log('🔵 [ORDER DETAIL] Usuario del pedido:', this.pedido.usuario);
+          console.log('🔵 [ORDER DETAIL] Método de pago:', this.pedido.metodoPago);
         }
         this.loading = false;
       },
@@ -178,5 +184,107 @@ export class OrderDetailPageComponent implements OnInit {
 
   updateCartCount(): void {
     this.cartItemCount = this.cartService.getCantidadItems();
+  }
+
+  // Métodos de búsqueda
+  openSearchModal(): void {
+    this.showSearchModal = true;
+    this.searchTerm = '';
+    this.searchResults = [];
+  }
+
+  closeSearchModal(): void {
+    this.showSearchModal = false;
+    this.searchTerm = '';
+    this.searchResults = [];
+  }
+
+  performSearch(): void {
+    if (!this.searchTerm.trim()) {
+      this.searchResults = [];
+      return;
+    }
+
+    const term = this.searchTerm.toLowerCase().trim();
+    this.searchResults = [];
+
+    // Buscar en items del pedido
+    if (this.pedido?.items) {
+      this.pedido.items.forEach(item => {
+        const productoNombre = item.productoNombre?.toLowerCase() || '';
+        const sku = item.variante?.sku?.toLowerCase() || '';
+        const color = item.variante?.color?.toLowerCase() || '';
+        const talle = item.variante?.talle?.toLowerCase() || '';
+
+        if (productoNombre.includes(term) ||
+            sku.includes(term) ||
+            color.includes(term) ||
+            talle.includes(term)) {
+          
+          this.searchResults.push({
+            type: 'item',
+            title: item.productoNombre || 'Producto sin nombre',
+            description: `${item.variante?.color || 'Sin color'} - Talle ${item.variante?.talle || 'Sin talle'} - SKU: ${item.variante?.sku || 'Sin SKU'}`,
+            data: item
+          });
+        }
+      });
+    }
+
+    // Buscar en información del pedido
+    if (this.pedido) {
+      if (this.pedido.id.toString().includes(term) ||
+          this.pedido.estado.toLowerCase().includes(term) ||
+          this.pedido.tipo.toLowerCase().includes(term) ||
+          this.pedido.montoTotal.toString().includes(term)) {
+        
+        this.searchResults.push({
+          type: 'pedido',
+          title: `Pedido #${this.pedido.id}`,
+          description: `${this.pedido.estado} - ${this.pedido.tipo} - Total: $${this.pedido.montoTotal}`,
+          data: this.pedido
+        });
+      }
+    }
+
+    // Buscar en elementos de la página (títulos, botones, etc.)
+    const pageElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6, button, a, span, p');
+    pageElements.forEach(element => {
+      const text = element.textContent?.toLowerCase() || '';
+      if (text.includes(term) && text.length > 0) {
+        this.searchResults.push({
+          type: 'elemento',
+          title: element.textContent?.trim() || '',
+          description: `Elemento encontrado en la página`,
+          element: element
+        });
+      }
+    });
+  }
+
+  scrollToResult(result: any): void {
+    // Cerrar el modal de búsqueda automáticamente
+    this.closeSearchModal();
+    
+    if (result.type === 'item') {
+      // Scroll al item del pedido
+      const itemElement = document.querySelector(`[data-item-id="${result.data.id}"]`);
+      if (itemElement) {
+        itemElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Resaltar el elemento
+        itemElement.classList.add('search-highlight');
+        setTimeout(() => {
+          itemElement.classList.remove('search-highlight');
+        }, 2000);
+      }
+    } else if (result.element) {
+      // Scroll al elemento de la página
+      result.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Resaltar el elemento
+      result.element.classList.add('search-highlight');
+      setTimeout(() => {
+        result.element.classList.remove('search-highlight');
+      }, 2000);
+    }
   }
 }

@@ -30,6 +30,11 @@ export class CartPageComponent implements OnInit {
     { value: 'cheque', label: 'Cheque' }
   ];
 
+  // Funcionalidad de búsqueda
+  showSearchModal = false;
+  searchTerm = '';
+  searchResults: any[] = [];
+
   constructor(
     private cart: CartService, 
     private orders: OrdersService,
@@ -244,6 +249,85 @@ export class CartPageComponent implements OnInit {
       this.cart.actualizarCantidad(itemId, nuevaCantidad);
       this.loadCarritoItems(); // Recargar la lista para actualizar totales
       this.updateCartCount(); // Actualizar contador
+    }
+  }
+
+  // Métodos de búsqueda
+  openSearchModal(): void {
+    this.showSearchModal = true;
+    this.searchTerm = '';
+    this.searchResults = [];
+  }
+
+  closeSearchModal(): void {
+    this.showSearchModal = false;
+    this.searchTerm = '';
+    this.searchResults = [];
+  }
+
+  performSearch(): void {
+    if (!this.searchTerm.trim()) {
+      this.searchResults = [];
+      return;
+    }
+
+    const term = this.searchTerm.toLowerCase().trim();
+    this.searchResults = [];
+
+    // Buscar en items del carrito
+    this.carritoItems.forEach(item => {
+      if (item.productoNombre.toLowerCase().includes(term) ||
+          item.sku.toLowerCase().includes(term) ||
+          item.color.toLowerCase().includes(term) ||
+          item.talle.toLowerCase().includes(term)) {
+        
+        this.searchResults.push({
+          type: 'item',
+          title: item.productoNombre,
+          description: `${item.color} - Talle ${item.talle} - SKU: ${item.sku}`,
+          data: item
+        });
+      }
+    });
+
+    // Buscar en elementos de la página (títulos, botones, etc.)
+    const pageElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6, button, a, span, p');
+    pageElements.forEach(element => {
+      const text = element.textContent?.toLowerCase() || '';
+      if (text.includes(term) && text.length > 0) {
+        this.searchResults.push({
+          type: 'elemento',
+          title: element.textContent?.trim() || '',
+          description: `Elemento encontrado en la página`,
+          element: element
+        });
+      }
+    });
+  }
+
+  scrollToResult(result: any): void {
+    // Cerrar el modal de búsqueda automáticamente
+    this.closeSearchModal();
+    
+    if (result.type === 'item') {
+      // Scroll al item del carrito
+      const itemElement = document.querySelector(`[data-item-id="${result.data.id}"]`);
+      if (itemElement) {
+        itemElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Resaltar el elemento
+        itemElement.classList.add('search-highlight');
+        setTimeout(() => {
+          itemElement.classList.remove('search-highlight');
+        }, 2000);
+      }
+    } else if (result.element) {
+      // Scroll al elemento de la página
+      result.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Resaltar el elemento
+      result.element.classList.add('search-highlight');
+      setTimeout(() => {
+        result.element.classList.remove('search-highlight');
+      }, 2000);
     }
   }
 }
